@@ -1,45 +1,38 @@
 package io.github.azerisproyecte;
 
-import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.utils.viewport.Viewport;
+import io.github.azerisproyecte.asset.AssetService;
+import io.github.azerisproyecte.asset.MapAsset;
 
 /** First screen of the application. Displayed after the application is created. */
-public class FirstScreen implements Screen {
+public class FirstScreen extends ScreenAdapter {
+
+    private final azerisMain azerisMain;
+    private OrthographicCamera camera;
+    private Viewport viewport;
+    private AssetService assetService;
+
+    private final OrthogonalTiledMapRenderer;
+
+    public FirstScreen(azerisMain azerisMain) {
+
+        this.azerisMain = azerisMain;
+        this.assetService = azerisMain.getAssetService();
+        this.viewport = azerisMain.getViewport();
+        this.camera = azerisMain.getCamera();
+
+    }
+
     @Override
     public void show() {
-        // Prepare your screen here.
+        this.assetService.load(MapAsset.MAIN);
     }
 
     @Override
     public void render(float delta) {
-        // Draw your screen here. "delta" is the time since last render in seconds.
-    }
-
-    @Override
-    public void resize(int width, int height) {
-        // If the window is minimized on a desktop (LWJGL3) platform, width and height are 0, which causes problems.
-        // In that case, we don't resize anything, and wait for the window to be a normal size before updating.
-        if(width <= 0 || height <= 0) return;
-
-        // Resize your screen here. The parameters represent the new window size.
-    }
-
-    @Override
-    public void pause() {
-        // Invoked when your application is paused.
-    }
-
-    @Override
-    public void resume() {
-        // Invoked when your application is resumed after pause.
-    }
-
-    @Override
-    public void hide() {
-        // This method is called when another screen replaces this one.
-    }
-
-    @Override
-    public void dispose() {
-        // Destroy screen's assets here.
+        super.render(delta);
     }
 }

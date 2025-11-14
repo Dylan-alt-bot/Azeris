@@ -1,5 +1,6 @@
 package io.github.azerisproyecte.asset;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.maps.tiled.TiledMap;
@@ -28,10 +29,17 @@ public class AssetService implements Disposable {
         this.assetManager.load(asset.getDescriptor());
     }
 
+    public <T> T get(Asset<T> asset) {
+        return this.assetManager.get(asset.getDescriptor());
+    }
 
+    public boolean update() {
+        return this.assetManager.update();
+    }
 
-
-
+    public void debugDiagnostics() {
+        Gdx.app.debug("AssetService", this.assetManager.getDiagnostics());
+    }
 
     @Override
     public void dispose() {
