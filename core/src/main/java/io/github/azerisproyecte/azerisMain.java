@@ -4,7 +4,6 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.graphics.FPSLogger;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -14,7 +13,6 @@ import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import io.github.azerisproyecte.asset.AssetService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +26,6 @@ public class azerisMain extends Game {
     private Batch batch;
     private OrthographicCamera camera;
     private Viewport viewport;
-    private AssetService assetService;
     private GLProfiler glProfiler;
     private FPSLogger fpsLogger = new FPSLogger();
 
@@ -41,7 +38,6 @@ public class azerisMain extends Game {
         this.batch = new SpriteBatch();
         this.camera = new OrthographicCamera();
         this.viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
-        this.assetService = new AssetService(new InternalFileHandleResolver());
         this.glProfiler = new GLProfiler(Gdx.graphics);
         this.glProfiler.enable();
         this.fpsLogger = new FPSLogger();
@@ -88,9 +84,6 @@ public class azerisMain extends Game {
         screenCache.clear();
 
         this.batch.dispose();
-        this.assetService.debugDiagnostics();
-        this.assetService.dispose();
-
     }
 
     public Batch getBatch() {
@@ -103,9 +96,5 @@ public class azerisMain extends Game {
 
     public Viewport getViewport() {
         return viewport;
-    }
-
-    public AssetService getAssetService() {
-        return assetService;
     }
 }
