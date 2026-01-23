@@ -12,7 +12,6 @@ import io.github.azerisproyecte.levelGenerator.Room;
 
 import java.util.List;
 
-/** First screen of the application. Displayed after the application is created. */
 public class FirstScreen extends ScreenAdapter {
 
     public static final int WORLD_WIDTH = 16;
@@ -36,13 +35,19 @@ public class FirstScreen extends ScreenAdapter {
         this.camera = azerisMain.getCamera();
         this.engine = new Engine();
 
-        generator = new DungeonGenerator(10, 10); // 10x10 grid
-        dungeon = generator.generateDungeon(8); // Generate 8 rooms
+        generator = new DungeonGenerator(16, 9); // 10x10 grid
+        dungeon = generator.generateDungeon(14); // Generate 8 rooms
 
         Pixmap pixmap = new Pixmap(16, 16, Pixmap.Format.RGBA8888);
         pixmap.setColor(Color.GRAY); // Wall color
         pixmap.fill();
         wallTexture = new Texture(pixmap);
+        pixmap.dispose();
+
+        pixmap = new Pixmap(16, 16, Pixmap.Format.RGBA8888);
+        pixmap.setColor(Color.BROWN); // Floor color
+        pixmap.fill();
+        floorTexture = new Texture(pixmap);
         pixmap.dispose();
     }
 
@@ -58,14 +63,14 @@ public class FirstScreen extends ScreenAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // Begin drawing
-        game.batch.begin();
+        azerisMain.getBatch().begin();
 
         // Draw each room
         for (Room room : dungeon) {
             drawRoom(room);
         }
 
-        game.batch.end();
+        azerisMain.getBatch().end();
     }
 
     private void drawRoom(Room room) {
@@ -77,7 +82,7 @@ public class FirstScreen extends ScreenAdapter {
         for (int i = 0; i < room.width; i++) {
             for (int j = 0; j < room.height; j++) {
                 Texture texture = room.tiles[i][j] ? wallTexture : floorTexture;
-                game.batch.draw(texture,
+                azerisMain.getBatch().draw(texture,
                     screenX + i * TILE_SIZE,
                     screenY + j * TILE_SIZE,
                     TILE_SIZE, TILE_SIZE);
@@ -87,6 +92,15 @@ public class FirstScreen extends ScreenAdapter {
 
     @Override
     public void dispose() {
+
+        for (EntitySystem system : this.engine.getSystems()) {
+            if (system instanceof Disposable disposableSystem) {
+                disposableSystem.dispose();
+            }
+        }
+
+        if (wallTexture != null) wallTexture.dispose();
+        if (floorTexture != null) floorTexture.dispose();
 
         for (EntitySystem system : this.engine.getSystems()) {
             if (system instanceof Disposable disposableSystem) {

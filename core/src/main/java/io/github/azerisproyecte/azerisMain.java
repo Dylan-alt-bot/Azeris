@@ -17,7 +17,6 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import java.util.HashMap;
 import java.util.Map;
 
-/** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class azerisMain extends Game {
 
     public static final float WORLD_WIDTH = 16f;
@@ -67,6 +66,7 @@ public class azerisMain extends Game {
 
     @Override
     public void render() {
+
         glProfiler.reset();
 
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
