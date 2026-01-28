@@ -1,1 +1,6 @@
-.gitkeep
+libgdx.png
+maps/mapa_beta.png
+player/Player_corriendo.png
+player/player.png
+player/player_atacando.png
+player/player_atacar.png
