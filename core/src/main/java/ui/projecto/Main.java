@@ -19,6 +19,8 @@ public class Main extends ApplicationAdapter {
     private GLProfiler glProfiler;
     private BitmapFont font;
     private Texture mapabeta;
+    private TextureRegion textureRegion;
+    private FitViewport fitViewport;
 
     private boolean fullscreen = false;
 
@@ -31,7 +33,9 @@ public class Main extends ApplicationAdapter {
 
         viewport = new FitViewport(Player.getVirtualWidth(), Player.getVirtualHeight(), camera);
 
-        mapabeta = new Texture(Gdx.files.internal("maps/mapa_beta.png"));
+        mapabeta = new Texture(Gdx.files.internal("maps/mapabase.png"));
+        textureRegion = new TextureRegion(mapabeta);
+        fitViewport = new FitViewport(Player.getVirtualWidth(), Player.getVirtualHeight());
         Gdx.input.setInputProcessor(null);
 
         jugadorPrincipal = new Player(250, 250);

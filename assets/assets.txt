@@ -1,6 +1,8 @@
 libgdx.png
 maps/mapa_beta.png
+maps/mapabase.png
 player/Player_corriendo.png
 player/player.png
 player/player_atacando.png
 player/player_atacar.png
+player/player_sprint.png
