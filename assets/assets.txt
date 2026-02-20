@@ -5,4 +5,6 @@ player/Player_corriendo.png
 player/player.png
 player/player_atacando.png
 player/player_atacar.png
+player/player_dolor.png
+player/player_muerte.png
 player/player_sprint.png

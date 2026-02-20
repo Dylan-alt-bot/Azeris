@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import ui.projecto.personajes.Player;
 
 public class Main extends ApplicationAdapter {
     private SpriteBatch batch;

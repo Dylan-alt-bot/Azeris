@@ -1,4 +1,4 @@
-package ui.projecto;
+package ui.projecto.personajes;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import ui.projecto.mecanicas.Vida;
 
 public class Player{
     public float x, y;
@@ -16,17 +17,23 @@ public class Player{
     private Animation<TextureRegion> animacionActual;
     private final Animation<TextureRegion> animacionAtacar;
     private final Animation<TextureRegion> animacionSprintar;
+    private Animation<TextureRegion> animacionDolor;
+    private Animation<TextureRegion> animacionMuerte;
 
     private float tiempo;
     private int direccionActual;
     private boolean sprintCooldown = false;
     private float tiempoCooldownSprint = 0f;
     private static final float DURACION_COOLDOWN_SPRINT = 2f;
+    private int direccionDolor;
 
     private final Texture neutral;
     private final Texture correr;
     private final Texture atacar;
     private final Texture sprint;
+    private Texture dolor;
+    private Texture muerte;
+    private Texture barraVida;
 
     private float velocidad;
     private static final float VELOCIDAD_NORMAL = 150f;
@@ -36,6 +43,8 @@ public class Player{
     private boolean moviendose;
     private boolean atacando;
     private boolean sprintando;
+    private boolean recibiendoDanio = false;
+    private boolean muerto = false;
 
     private float tiempoAtaque;
     private static final float DURACION_ATAQUE = 0.4f;
@@ -43,28 +52,45 @@ public class Player{
     private float tiempoSprint;
     private static final float DURACION_SPRINT = 0.4f;
 
+    private float tiempoDolor;
+    private static final float DURACION_DOLOR = 0.3f;
+    private static final float RETROCESO = 30f;
+
+    private float tiempoMuerte;
+    private static final float DURACION_MUERTE = 3f;
 
     private static final float VIRTUAL_WIDTH = 800;
     private static final float VIRTUAL_HEIGHT = 480;
 
+    private Vida vida;
+
     private final int IDLE_FRAMES_X = 5;
     private final int IDLE_FRAMES_Y = 5;
-    private final int TOTAL_IDLE_FRAMES = IDLE_FRAMES_X * IDLE_FRAMES_Y;
 
     private final int RUN_FRAMES_X = 4;
     private final int RUN_FRAMES_Y = 4;
-    private final int TOTAL_RUN_FRAMES = RUN_FRAMES_X * RUN_FRAMES_Y;
 
     private final int ATTACK_FRAMES_X = 4;
     private final int ATTACK_FRAMES_Y = 3;
-    private final int TOTAL_ATTACK_FRAMES = ATTACK_FRAMES_X * ATTACK_FRAMES_Y;
 
     private final int SPRINT_FRAMES_X = 4;
     private final int SPRINT_FRAMES_Y = 3;
-    private final int TOTAL_SPRINT_FRAMES = SPRINT_FRAMES_X * SPRINT_FRAMES_Y;
+
+    private final int DOLOR_FRAMES_X = 3;
+    private final int DOLOR_FRAMES_Y = 3;
+    private int TOTAL_DOLOR_FRAMES = DOLOR_FRAMES_X * DOLOR_FRAMES_Y;
+
+    private final int MUERTE_FRAMES_X = 7;
+    private final int MUERTE_FRAMES_Y = 6;
+    private int TOTAL_MUERTE_FRAMES =  MUERTE_FRAMES_X * MUERTE_FRAMES_Y;
 
     private float desplazamientoSprintRestante = 0f;
     private int direccionSprint = 0;
+
+    private boolean recibiendoDanioBorde = false;
+    private float tiempoDanioBorde = 0f;
+    private static final float INTERVALO_DANIO_BORDE = 0.5f;
+    private static final int DANIO_BORDE = 5;
 
     public Player(float x, float y) {
         this.x = x;
@@ -74,14 +100,25 @@ public class Player{
         this.direccionActual = 0;
         this.sprintando = false;
 
+        this.vida = new Vida(100);
+        font = new com.badlogic.gdx.graphics.g2d.BitmapFont();
+
         neutral = new Texture(Gdx.files.internal("player/player.png"));
         correr = new Texture(Gdx.files.internal("player/Player_corriendo.png"));
         atacar = new Texture(Gdx.files.internal("player/player_atacar.png"));
         sprint = new Texture(Gdx.files.internal("player/player_sprint.png"));
-        font = new com.badlogic.gdx.graphics.g2d.BitmapFont();
+        dolor = new Texture(Gdx.files.internal("player/player_dolor.png"));
+        muerte = new Texture(Gdx.files.internal("player/player_muerte.png"));
+
+        com.badlogic.gdx.graphics.Pixmap pixmap = new com.badlogic.gdx.graphics.Pixmap(1, 1, com.badlogic.gdx.graphics.Pixmap.Format.RGBA8888);
+        pixmap.setColor(1, 1, 1, 1);
+        pixmap.fill();
+        barraVida = new Texture(pixmap);
+        pixmap.dispose();
 
         // animación quieto (5x5)
         TextureRegion[][] idleFramesGrid = TextureRegion.split(neutral, neutral.getWidth() / IDLE_FRAMES_X, neutral.getHeight() / IDLE_FRAMES_Y);
+        int TOTAL_IDLE_FRAMES = IDLE_FRAMES_X * IDLE_FRAMES_Y;
         TextureRegion[] idleFrames = new TextureRegion[TOTAL_IDLE_FRAMES];
         int index = 0;
         for (int i = 0; i < IDLE_FRAMES_Y; i++) {
@@ -92,6 +129,7 @@ public class Player{
 
         // animación correr (4x4)
         TextureRegion[][] runFramesGrid = TextureRegion.split(correr, correr.getWidth() / RUN_FRAMES_X, correr.getHeight() / RUN_FRAMES_Y);
+        int TOTAL_RUN_FRAMES = RUN_FRAMES_X * RUN_FRAMES_Y;
         TextureRegion[] runFrames = new TextureRegion[TOTAL_RUN_FRAMES];
         index = 0;
         for (int i = 0; i < RUN_FRAMES_Y; i++) {
@@ -102,6 +140,7 @@ public class Player{
 
         // animacion atacar (4x3)
         TextureRegion[][] atacarFramesGrid = TextureRegion.split(atacar, atacar.getWidth() / ATTACK_FRAMES_X, atacar.getHeight() / ATTACK_FRAMES_Y);
+        int TOTAL_ATTACK_FRAMES = ATTACK_FRAMES_X * ATTACK_FRAMES_Y;
         TextureRegion[] atacarFrames = new TextureRegion[TOTAL_ATTACK_FRAMES];
         index = 0;
         for (int i = 0; i < ATTACK_FRAMES_Y; i++) {
@@ -110,15 +149,34 @@ public class Player{
             }
         }
 
-        // animacion sprintar (4x3 pero la última línea tiene 2 sprites)
+        // animacion sprintar (4x3)
         TextureRegion[][] sprintFramesGrid = TextureRegion.split(sprint, sprint.getWidth() / SPRINT_FRAMES_X, sprint.getHeight() / SPRINT_FRAMES_Y);
+        int TOTAL_SPRINT_FRAMES = SPRINT_FRAMES_X * SPRINT_FRAMES_Y;
         TextureRegion[] sprintFrames = new TextureRegion[TOTAL_SPRINT_FRAMES];
         index = 0;
-
-        // Primeras dos filas completas (10 frames)
         for (int i = 0; i < SPRINT_FRAMES_Y; i++) {
             for (int j = 0; j < SPRINT_FRAMES_X; j++) {
                 sprintFrames[index++] = sprintFramesGrid[i][j];
+            }
+        }
+
+        // animacion dolor(3x3)
+        TextureRegion[][] dolorFramesGrid = TextureRegion.split(dolor,dolor.getWidth() / DOLOR_FRAMES_X, dolor.getHeight() / DOLOR_FRAMES_Y);
+        TextureRegion[] dolorFrames = new TextureRegion[TOTAL_DOLOR_FRAMES];
+        index = 0;
+        for (int i = 0; i < DOLOR_FRAMES_Y; i++) {
+            for (int j = 0; j < DOLOR_FRAMES_X; j++) {
+                dolorFrames[index++] = dolorFramesGrid[i][j];
+            }
+        }
+
+        // animacion muerte (7x6)
+        TextureRegion[][] muerteFramesGrid = TextureRegion.split(muerte,muerte.getWidth() / MUERTE_FRAMES_X, muerte.getHeight() / MUERTE_FRAMES_Y);
+        TextureRegion[] muerteFrames = new TextureRegion[TOTAL_MUERTE_FRAMES];
+        index = 0;
+        for (int i = 0; i < MUERTE_FRAMES_Y; i++) {
+            for (int j = 0; j < MUERTE_FRAMES_X; j++) {
+                muerteFrames[index++] = muerteFramesGrid[i][j];
             }
         }
 
@@ -126,6 +184,8 @@ public class Player{
         float frameDurationCorrer = 0.04f;
         float frameDurationAtacar = DURACION_ATAQUE / TOTAL_ATTACK_FRAMES;
         float frameDurationSprint = DURACION_SPRINT / TOTAL_SPRINT_FRAMES;
+        float frameDurationDanio = DURACION_DOLOR / TOTAL_DOLOR_FRAMES;
+        float frameDurationMuerte = DURACION_MUERTE / TOTAL_MUERTE_FRAMES;
 
         animacionIdle = new Animation<>(frameDurationIdle, idleFrames);
         animacionIdle.setPlayMode(Animation.PlayMode.LOOP);
@@ -139,11 +199,56 @@ public class Player{
         animacionSprintar = new Animation<>(frameDurationSprint, sprintFrames);
         animacionSprintar.setPlayMode(Animation.PlayMode.NORMAL);
 
+        animacionDolor = new Animation<>(frameDurationDanio, dolorFrames);
+        animacionDolor.setPlayMode(Animation.PlayMode.NORMAL);
+
+        animacionMuerte = new Animation<>(frameDurationMuerte, muerteFrames);
+        animacionMuerte.setPlayMode(Animation.PlayMode.NORMAL);
+
         tiempo = 0f;
         animacionActual = animacionIdle;
     }
 
     public void update(float deltaTime) {
+
+        if (vida.isMuerto()) {
+            if (!muerto) {
+                // Primera vez que muere
+                muerto = true;
+                tiempoMuerte = 0f;
+                tiempo = 0f;
+                animacionActual = animacionMuerte;
+            }
+
+            tiempoMuerte += deltaTime;
+            tiempo += deltaTime;
+
+            // Revivir con tecla R
+            if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+                revivir();
+            }
+            return;
+        }
+
+        gestionarDanioBorde(deltaTime);
+
+        if (recibiendoDanio) {
+            tiempoDolor += deltaTime;
+            tiempo += deltaTime;
+
+            // Aplicar retroceso
+            aplicarRetroceso(deltaTime);
+
+            if (tiempoDolor >= DURACION_DOLOR || animacionDolor.isAnimationFinished(tiempo)) {
+                recibiendoDanio = false;
+                tiempoDolor = 0f;
+                vida.resetRecibiendoDolor();
+            }
+
+            aplicarLimites(deltaTime);
+            return;
+        }
+
         if (sprintCooldown){
             tiempoCooldownSprint += deltaTime;
             if (tiempoCooldownSprint >= DURACION_COOLDOWN_SPRINT){
@@ -228,8 +333,68 @@ public class Player{
         tiempo += deltaTime;
 
         // Aplicar límites de pantalla
-        aplicarLimites();
+        aplicarLimites(deltaTime);
     }
+
+    private void gestionarDanioBorde(float deltaTime) {
+        float anchoActual = getCurrentWidth();
+        float altoActual = getCurrentHeight();
+
+        boolean estaEnBorde = (x <= 0 || x >= VIRTUAL_WIDTH - anchoActual ||
+            y <= 0 || y >= VIRTUAL_HEIGHT - altoActual);
+
+        if (estaEnBorde && !vida.isMuerto() && !recibiendoDanio && !sprintando && !atacando) {
+            tiempoDanioBorde += deltaTime;
+            while (tiempoDanioBorde >= INTERVALO_DANIO_BORDE) {
+                tiempoDanioBorde -= INTERVALO_DANIO_BORDE;
+                int vidaAnterior = vida.getVidaActual();
+                vida.recibirDolor(DANIO_BORDE);
+
+                // Si la vida bajó, activar animación de daño
+                if (vida.getVidaActual() < vidaAnterior && !vida.isMuerto()) {
+                    activarDanio();
+                }
+            }
+        } else {
+            tiempoDanioBorde = 0f;
+        }
+    }
+
+    private void activarDanio() {
+        if (!recibiendoDanio && !vida.isMuerto()) {
+            recibiendoDanio = true;
+            tiempoDolor = 0f;
+            tiempo = 0f;
+            animacionActual = animacionDolor;
+            direccionDolor = direccionActual;
+
+            // Si no hay dirección, usar derecha por defecto
+            if (direccionDolor == 0) direccionDolor = 1;
+        }
+    }
+
+    private void aplicarRetroceso(float deltaTime) {
+        float retroceso = RETROCESO * deltaTime;
+        switch (direccionDolor) {
+            case 1: x -= retroceso; break; // Si mira derecha, retrocede izquierda
+            case 2: x += retroceso; break; // Si mira izquierda, retrocede derecha
+            case 3: y -= retroceso; break; // Si mira arriba, retrocede abajo
+            case 4: y += retroceso; break; // Si mira abajo, retrocede arriba
+        }
+    }
+
+    private void revivir() {
+        vida.revivir();
+        muerto = false;
+        recibiendoDanio = false;
+        sprintando = false;
+        atacando = false;
+        tiempo = 0f;
+        animacionActual = animacionIdle;
+        x = VIRTUAL_WIDTH / 2; // Resetear posición al centro
+        y = VIRTUAL_HEIGHT / 2;
+    }
+
 
     private void iniciarSprint() {
         if (sprintCooldown) return;
@@ -257,51 +422,49 @@ public class Player{
         tiempo += deltaTime;
 
         // Aplicar desplazamiento durante el sprint
-        if (desplazamientoSprintRestante > 0) {
-            float desplazamientoEsteFrame = DESPLAZAMIENTO_SPRINT * (deltaTime / DURACION_SPRINT);
-            desplazamientoEsteFrame = Math.min(desplazamientoEsteFrame, desplazamientoSprintRestante);
-
             // Aplicar desplazamiento según la dirección
             switch (direccionSprint) {
                 case 1: // Derecha
-                    x += desplazamientoEsteFrame;
+                    x += velocidad * deltaTime;
                     break;
                 case 2: // Izquierda
-                    x -= desplazamientoEsteFrame;
+                    x -= velocidad * deltaTime;
                     break;
                 case 3: // Arriba
-                    y += desplazamientoEsteFrame;
+                    y += velocidad * deltaTime;
                     break;
                 case 4: // Abajo
-                    y -= desplazamientoEsteFrame;
+                    y -= velocidad * deltaTime;
                     break;
                 default: // Si no hay dirección, usar derecha por defecto
-                    x += desplazamientoEsteFrame;
+                    x += velocidad * deltaTime;
                     break;
             }
 
-            desplazamientoSprintRestante -= desplazamientoEsteFrame;
-        }
-
         // Verificar si el sprint ha terminado
-        if (tiempoSprint >= DURACION_SPRINT || animacionSprintar.isAnimationFinished(tiempo)) {
+        if (animacionSprintar.isAnimationFinished(tiempo)) {
             finalizarSprint();
         }
 
         // Aplicar límites durante el sprint
-        aplicarLimites();
+        aplicarLimites(deltaTime);
     }
 
     private void finalizarSprint() {
         sprintando = false;
         tiempoSprint = 0f;
         velocidad = VELOCIDAD_NORMAL;
-        desplazamientoSprintRestante = 0f;
+        switch (direccionSprint) {
+            case 1: x += 5f; break;
+            case 2: x -= 5f; break;
+            case 3: y += 5f; break;
+            case 4: y -= 5f; break;
+        }
         animacionActual = animacionIdle;
     }
 
     public void atacar() {
-        if (!atacando && !sprintando) {
+        if (!atacando && !sprintando && !vida.isMuerto()) {
             atacando = true;
             tiempoAtaque = 0f;
             tiempo = 0f;
@@ -309,10 +472,6 @@ public class Player{
     }
 
     public void render(final SpriteBatch batch) {
-        if (sprintCooldown) {
-            float segundosRestantes = DURACION_COOLDOWN_SPRINT - tiempoCooldownSprint;
-            font.draw(batch, String.format("Proximo Sprint: %.1f", segundosRestantes), 10, 30);
-        }
         if (animacionActual == null) return;
 
         TextureRegion frameActual;
@@ -338,23 +497,65 @@ public class Player{
             } else if (animacionActual == animacionCorrer) {
                 drawWidth = correr.getWidth() / (float) RUN_FRAMES_X;
                 drawHeight = correr.getHeight() / (float) RUN_FRAMES_Y;
+            } else if (animacionActual == animacionDolor) {
+                drawWidth = dolor.getWidth() / (float) DOLOR_FRAMES_X;
+                drawHeight = dolor.getHeight() / (float) DOLOR_FRAMES_Y;
+            } else if (animacionActual == animacionMuerte) {
+                drawWidth = muerte.getWidth() / (float) MUERTE_FRAMES_X;
+                drawHeight = muerte.getHeight() / (float) MUERTE_FRAMES_Y;
             } else {
                 drawWidth = neutral.getWidth() / (float) IDLE_FRAMES_X;
                 drawHeight = neutral.getHeight() / (float) IDLE_FRAMES_Y;
             }
 
+            int direccionDibujo;
+            if (sprintando) {
+                direccionDibujo = direccionSprint;
+            } else if (recibiendoDanio) {
+                direccionDibujo = direccionDolor;
+            } else {
+                direccionDibujo = direccionActual;
+            }
+
             // Dibujar según dirección
-            if (direccionActual == 1 || (sprintando && direccionSprint == 1)) {
-                // Mirando a la derecha - voltear horizontalmente
+            if (direccionDibujo == 1) {
                 batch.draw(frameActual, x + drawWidth, y, -drawWidth, drawHeight);
             } else {
-                // Mirando a la izquierda o cualquier otra dirección
                 batch.draw(frameActual, x, y, drawWidth, drawHeight);
+            }
+
+            if (!vida.isMuerto()) {
+                // Texto de vida
+                font.draw(batch, "Vida: " + vida.getVidaActual() + "%", 10, 30);
+
+                // Barra de vida
+                float anchoBarra = 200;
+                float altoBarra = 15;
+                float xBarra = 10;
+                float yBarra = 40;
+
+                batch.setColor(0.8f, 0.2f, 0.2f, 1);
+                batch.draw(barraVida, xBarra, yBarra, anchoBarra, altoBarra);
+
+                batch.setColor(0.2f, 0.8f, 0.2f, 1);
+                float anchoVida = vida.getPorcentajeVida() * anchoBarra;
+                batch.draw(barraVida, xBarra, yBarra, anchoVida, altoBarra);
+
+                batch.setColor(1, 1, 1, 1);
+            } else {
+                // Mensaje de muerte
+                font.draw(batch, "HAS MUERTO - Presiona R para revivir",
+                    VIRTUAL_WIDTH/2 - 150, VIRTUAL_HEIGHT/2);
+            }
+
+            if (sprintCooldown) {
+                float segundosRestantes = DURACION_COOLDOWN_SPRINT - tiempoCooldownSprint;
+                font.draw(batch, String.format("Proximo Sprint: %.1f", segundosRestantes), 10, 70);
             }
         }
     }
 
-    private void aplicarLimites() {
+    private void aplicarLimites(float deltaTime) {
         float anchoActual = getCurrentWidth();
         float altoActual = getCurrentHeight();
 
@@ -371,6 +572,10 @@ public class Player{
             return atacar.getWidth() / (float) ATTACK_FRAMES_X;
         } else if (animacionActual == animacionCorrer) {
             return correr.getWidth() / (float) RUN_FRAMES_X;
+        } else if (animacionActual == animacionDolor) {
+            return dolor.getHeight() / (float) IDLE_FRAMES_X;
+        } else if (animacionActual == animacionMuerte) {
+            return muerte.getHeight() / (float) IDLE_FRAMES_X;
         } else {
             return neutral.getWidth() / (float) IDLE_FRAMES_X;
         }
@@ -383,6 +588,10 @@ public class Player{
             return atacar.getHeight() / (float) ATTACK_FRAMES_Y;
         } else if (animacionActual == animacionCorrer) {
             return correr.getHeight() / (float) RUN_FRAMES_Y;
+        } else if (animacionActual == animacionDolor) {
+            return dolor.getHeight() / (float) IDLE_FRAMES_Y;
+        } else if (animacionActual == animacionMuerte) {
+            return muerte.getHeight() / (float) IDLE_FRAMES_Y;
         } else {
             return neutral.getHeight() / (float) IDLE_FRAMES_Y;
         }
@@ -393,6 +602,9 @@ public class Player{
         if (correr != null) correr.dispose();
         if (atacar != null) atacar.dispose();
         if (sprint != null) sprint.dispose();
+        if (dolor != null) dolor.dispose();
+        if (muerte != null) muerte.dispose();
+        if (barraVida != null) barraVida.dispose();
         if (font != null) font.dispose();
     }
 
