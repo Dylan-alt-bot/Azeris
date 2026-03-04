@@ -9,6 +9,11 @@ public class Room {
         public boolean[][] tiles; // true = wall, false = floor
         public List<Door> doors;
 
+        public boolean hasNorthNeighbor = false;
+        public boolean hasSouthNeighbor = false;
+        public boolean hasEastNeighbor = false;
+        public boolean hasWestNeighbor = false;
+
         public Room(int x, int y, int width, int height) {
             this.x = x;
             this.y = y;
@@ -29,14 +34,15 @@ public class Room {
         }
 
     public static class Door {
-        public int x, y; // Position in room coordinates
+        public int position; // Position in room coordinates
         public Direction direction;
+        public Room connectedRoom;
 
         public enum Direction {
             NORTH, SOUTH, EAST, WEST
         }
     }
 
-    }
+}
 
 

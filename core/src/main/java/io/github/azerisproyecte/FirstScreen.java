@@ -3,6 +3,7 @@ package io.github.azerisproyecte;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.EntitySystem;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.utils.Disposable;
@@ -10,23 +11,28 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.azerisproyecte.levelGenerator.DungeonGenerator;
 import io.github.azerisproyecte.levelGenerator.Room;
 
-import java.util.List;
+import java.util.*;
 
-public class FirstScreen extends ScreenAdapter {
+public class FirstScreen extends ScreenAdapter implements InputProcessor {
 
-    public static final int WORLD_WIDTH = 16;
-    public static final int WORLD_HEIGHT = 9;
+    //public static final float WORLD_WIDTH = 25f;
+    //public static final float WORLD_HEIGHT = 25f * 9f/16f;
 
     private final azerisMain azerisMain;
     private OrthographicCamera camera;
     private Viewport viewport;
     private final Engine engine;
-
     private List<Room> dungeon;
     private DungeonGenerator generator;
     private Texture wallTexture;
     private Texture floorTexture;
-    private final int TILE_SIZE = 16;
+    private Texture doorTexture;
+    private final float TILE_SIZE = 1.0f;
+
+    private float minZoom = 0.2f;    // How far you can zoom in
+    private float maxZoom = 3.0f;    // How far you can zoom out
+    private float zoomSpeed = 0.1f;
+
 
     public FirstScreen(azerisMain azerisMain) {
 
@@ -35,8 +41,8 @@ public class FirstScreen extends ScreenAdapter {
         this.camera = azerisMain.getCamera();
         this.engine = new Engine();
 
-        generator = new DungeonGenerator(16, 9); // 10x10 grid
-        dungeon = generator.generateDungeon(14); // Generate 8 rooms
+        generator = new DungeonGenerator(8, 8); // 16x10 grid = 160 tiles
+        dungeon = generator.generateDungeon((int)(10 + Math.random() * 5)); // Generate 10-15 rooms --> (int) (10 + Math.random() * 5)
 
         Pixmap pixmap = new Pixmap(16, 16, Pixmap.Format.RGBA8888);
         pixmap.setColor(Color.GRAY); // Wall color
@@ -49,6 +55,19 @@ public class FirstScreen extends ScreenAdapter {
         pixmap.fill();
         floorTexture = new Texture(pixmap);
         pixmap.dispose();
+
+        pixmap = new Pixmap(16, 16, Pixmap.Format.RGBA8888);
+        pixmap.setColor(Color.BLUE); // Door Color
+        pixmap.fill();
+        doorTexture = new Texture(pixmap);
+        pixmap.dispose();
+
+        // Set up camera position to see the dungeon
+        camera.position.set(4, 4, 0); // Center around grid position (4,4)
+        camera.zoom = 1.5f; // Zoom out a bit to see more
+        camera.update();
+
+        Gdx.input.setInputProcessor(this);
     }
 
     @Override
@@ -62,6 +81,10 @@ public class FirstScreen extends ScreenAdapter {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        // Update camera (handles zoom from input)
+        camera.update();
+        azerisMain.getBatch().setProjectionMatrix(camera.combined);
+
         // Begin drawing
         azerisMain.getBatch().begin();
 
@@ -71,20 +94,24 @@ public class FirstScreen extends ScreenAdapter {
         }
 
         azerisMain.getBatch().end();
+
     }
 
     private void drawRoom(Room room) {
-        // Calculate screen position (center rooms on screen)
-        int screenX = (Gdx.graphics.getWidth() / 2) + (room.x - WORLD_WIDTH/2) * (room.width * TILE_SIZE);
-        int screenY = (Gdx.graphics.getHeight() / 2) + (room.y - WORLD_HEIGHT/2) * (room.height * TILE_SIZE);
+        // Get the CORRECT world position from the generator
+        float worldX = generator.getRoomWorldX(room);
+        float worldY = generator.getRoomWorldY(room);
 
-        // Draw each tile
+        // Draw each tile in the room
         for (int i = 0; i < room.width; i++) {
             for (int j = 0; j < room.height; j++) {
                 Texture texture = room.tiles[i][j] ? wallTexture : floorTexture;
+
+                float tileX = worldX + i * TILE_SIZE;
+                float tileY = worldY + j * TILE_SIZE;
+
                 azerisMain.getBatch().draw(texture,
-                    screenX + i * TILE_SIZE,
-                    screenY + j * TILE_SIZE,
+                    tileX, tileY,
                     TILE_SIZE, TILE_SIZE);
             }
         }
@@ -107,7 +134,56 @@ public class FirstScreen extends ScreenAdapter {
                 disposableSystem.dispose();
             }
         }
+        Gdx.input.setInputProcessor(null);
 
     }
 
+
+    @Override
+    public boolean keyDown(int keycode) {
+        return false;
+    }
+
+    @Override
+    public boolean keyUp(int keycode) {
+        return false;
+    }
+
+    @Override
+    public boolean keyTyped(char character) {
+        return false;
+    }
+
+    @Override
+    public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean touchDragged(int screenX, int screenY, int pointer) {
+        return false;
+    }
+
+    @Override
+    public boolean mouseMoved(int screenX, int screenY) {
+        return false;
+    }
+
+    @Override
+    public boolean scrolled(float amountX, float amountY) {
+
+        float zoomChange = amountY < 0 ? -zoomSpeed : zoomSpeed;
+        camera.zoom = Math.max(minZoom, Math.min(maxZoom, camera.zoom + zoomChange));
+        return true;
+    }
 }

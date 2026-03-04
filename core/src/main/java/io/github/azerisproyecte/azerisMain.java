@@ -1,9 +1,6 @@
 package io.github.azerisproyecte;
 
-import com.badlogic.gdx.Application;
-import com.badlogic.gdx.Game;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.FPSLogger;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -17,10 +14,10 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import java.util.HashMap;
 import java.util.Map;
 
-public class azerisMain extends Game {
+public class azerisMain extends Game{
 
-    public static final float WORLD_WIDTH = 16f;
-    public static final float WORLD_HEIGHT = 9f;
+    public static final int WORLD_WIDTH = 50;
+    public static final int WORLD_HEIGHT = 50;
 
     private Batch batch;
     private OrthographicCamera camera;
@@ -41,14 +38,19 @@ public class azerisMain extends Game {
         this.glProfiler.enable();
         this.fpsLogger = new FPSLogger();
 
+        camera.position.set(0, 0, 0);
+        camera.zoom = 1.0f;
+        camera.update();
+
         addScreen(new FirstScreen(this));
         setScreen(FirstScreen.class);
     }
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height, true);
-        super.resize(width, height);
+        viewport.update(width, height);
+        camera.position.set(WORLD_WIDTH / 2f, WORLD_HEIGHT / 2f, 0);
+        camera.update();
     }
 
     public void addScreen(Screen screen) {
@@ -66,6 +68,10 @@ public class azerisMain extends Game {
 
     @Override
     public void render() {
+
+        camMove();
+        camera.update();
+        batch.setProjectionMatrix(camera.combined);
 
         glProfiler.reset();
 
@@ -96,5 +102,20 @@ public class azerisMain extends Game {
 
     public Viewport getViewport() {
         return viewport;
+    }
+
+    private void camMove() {
+        if(Gdx.input.isKeyPressed(Input.Keys.W)) {
+            camera.translate(0,3,0);
+        }
+        if(Gdx.input.isKeyPressed(Input.Keys.S)) {
+            camera.translate(0,-3,0);
+        }
+        if(Gdx.input.isKeyPressed(Input.Keys.A)) {
+            camera.translate(-3,0,0);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+            camera.translate(3,0,0);
+        }
     }
 }
