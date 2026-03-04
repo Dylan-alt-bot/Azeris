@@ -9,11 +9,6 @@ public class Room {
         public boolean[][] tiles; // true = wall, false = floor
         public List<Door> doors;
 
-        public boolean hasNorthNeighbor = false;
-        public boolean hasSouthNeighbor = false;
-        public boolean hasEastNeighbor = false;
-        public boolean hasWestNeighbor = false;
-
         public Room(int x, int y, int width, int height) {
             this.x = x;
             this.y = y;
