@@ -43,7 +43,7 @@ public class Player{
     private boolean moviendose;
     private boolean atacando;
     private boolean sprintando;
-    private boolean recibiendoDanio = false;
+    private boolean recibiendoDany = false;
     private boolean muerto = false;
 
     private float tiempoAtaque;
@@ -54,12 +54,12 @@ public class Player{
 
     private float tiempoDolor;
     private static final float DURACION_DOLOR = 0.3f;
-    private static final float RETROCESO = 30f;
+    private static final float RETROCESO = 40f;
 
     private float tiempoMuerte;
-    private static final float DURACION_MUERTE = 3f;
+    private static final float DURACION_MUERTE = 2.5f;
 
-    private static final float VIRTUAL_WIDTH = 800;
+    private static final float VIRTUAL_WIDTH = 650;
     private static final float VIRTUAL_HEIGHT = 480;
 
     private Vida vida;
@@ -87,10 +87,9 @@ public class Player{
     private float desplazamientoSprintRestante = 0f;
     private int direccionSprint = 0;
 
-    private boolean recibiendoDanioBorde = false;
-    private float tiempoDanioBorde = 0f;
-    private static final float INTERVALO_DANIO_BORDE = 0.5f;
-    private static final int DANIO_BORDE = 5;
+    private float tiempoDanyBorde = 0f;
+    private static final float INTERVALO_DANY_BORDE = 0.2f;
+    private static final int DANY_BORDE = 5;
 
     public Player(float x, float y) {
         this.x = x;
@@ -210,10 +209,8 @@ public class Player{
     }
 
     public void update(float deltaTime) {
-
         if (vida.isMuerto()) {
             if (!muerto) {
-                // Primera vez que muere
                 muerto = true;
                 tiempoMuerte = 0f;
                 tiempo = 0f;
@@ -223,24 +220,22 @@ public class Player{
             tiempoMuerte += deltaTime;
             tiempo += deltaTime;
 
-            // Revivir con tecla R
             if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
                 revivir();
             }
             return;
         }
 
-        gestionarDanioBorde(deltaTime);
+        gestionarDanyBorde(deltaTime);
 
-        if (recibiendoDanio) {
+        if (recibiendoDany) {
             tiempoDolor += deltaTime;
             tiempo += deltaTime;
 
-            // Aplicar retroceso
             aplicarRetroceso(deltaTime);
 
             if (tiempoDolor >= DURACION_DOLOR || animacionDolor.isAnimationFinished(tiempo)) {
-                recibiendoDanio = false;
+                recibiendoDany = false;
                 tiempoDolor = 0f;
                 vida.resetRecibiendoDolor();
             }
@@ -336,33 +331,33 @@ public class Player{
         aplicarLimites(deltaTime);
     }
 
-    private void gestionarDanioBorde(float deltaTime) {
+    private void gestionarDanyBorde(float deltaTime) {
         float anchoActual = getCurrentWidth();
         float altoActual = getCurrentHeight();
 
         boolean estaEnBorde = (x <= 0 || x >= VIRTUAL_WIDTH - anchoActual ||
             y <= 0 || y >= VIRTUAL_HEIGHT - altoActual);
 
-        if (estaEnBorde && !vida.isMuerto() && !recibiendoDanio && !sprintando && !atacando) {
-            tiempoDanioBorde += deltaTime;
-            while (tiempoDanioBorde >= INTERVALO_DANIO_BORDE) {
-                tiempoDanioBorde -= INTERVALO_DANIO_BORDE;
+        if (estaEnBorde && !vida.isMuerto() && !recibiendoDany) {
+            tiempoDanyBorde += deltaTime;
+            while (tiempoDanyBorde >= INTERVALO_DANY_BORDE) {
+                tiempoDanyBorde -= INTERVALO_DANY_BORDE;
                 int vidaAnterior = vida.getVidaActual();
-                vida.recibirDolor(DANIO_BORDE);
+                vida.recibirDolor(DANY_BORDE);
 
                 // Si la vida bajó, activar animación de daño
                 if (vida.getVidaActual() < vidaAnterior && !vida.isMuerto()) {
-                    activarDanio();
+                    activarDany();
                 }
             }
         } else {
-            tiempoDanioBorde = 0f;
+            tiempoDanyBorde = 0f;
         }
     }
 
-    private void activarDanio() {
-        if (!recibiendoDanio && !vida.isMuerto()) {
-            recibiendoDanio = true;
+    private void activarDany() {
+        if (!recibiendoDany && !vida.isMuerto()) {
+            recibiendoDany = true;
             tiempoDolor = 0f;
             tiempo = 0f;
             animacionActual = animacionDolor;
@@ -386,12 +381,12 @@ public class Player{
     private void revivir() {
         vida.revivir();
         muerto = false;
-        recibiendoDanio = false;
+        recibiendoDany = false;
         sprintando = false;
         atacando = false;
         tiempo = 0f;
         animacionActual = animacionIdle;
-        x = VIRTUAL_WIDTH / 2; // Resetear posición al centro
+        x = VIRTUAL_WIDTH / 2;
         y = VIRTUAL_HEIGHT / 2;
     }
 
@@ -511,7 +506,7 @@ public class Player{
             int direccionDibujo;
             if (sprintando) {
                 direccionDibujo = direccionSprint;
-            } else if (recibiendoDanio) {
+            } else if (recibiendoDany) {
                 direccionDibujo = direccionDolor;
             } else {
                 direccionDibujo = direccionActual;
@@ -525,14 +520,13 @@ public class Player{
             }
 
             if (!vida.isMuerto()) {
-                // Texto de vida
-                font.draw(batch, "Vida: " + vida.getVidaActual() + "%", 10, 30);
+                font.draw(batch, "Vida: " + vida.getVidaActual() + "%", 10, 440);
 
                 // Barra de vida
-                float anchoBarra = 200;
+                float anchoBarra = 250;
                 float altoBarra = 15;
                 float xBarra = 10;
-                float yBarra = 40;
+                float yBarra = 450;
 
                 batch.setColor(0.8f, 0.2f, 0.2f, 1);
                 batch.draw(barraVida, xBarra, yBarra, anchoBarra, altoBarra);
@@ -543,14 +537,13 @@ public class Player{
 
                 batch.setColor(1, 1, 1, 1);
             } else {
-                // Mensaje de muerte
                 font.draw(batch, "HAS MUERTO - Presiona R para revivir",
                     VIRTUAL_WIDTH/2 - 150, VIRTUAL_HEIGHT/2);
             }
 
             if (sprintCooldown) {
                 float segundosRestantes = DURACION_COOLDOWN_SPRINT - tiempoCooldownSprint;
-                font.draw(batch, String.format("Proximo Sprint: %.1f", segundosRestantes), 10, 70);
+                font.draw(batch, String.format("Proximo Sprint: %.1f", segundosRestantes), 10, 420);
             }
         }
     }

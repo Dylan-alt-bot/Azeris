@@ -6,24 +6,11 @@ public class Vida {
     private boolean recibiendoDanio;
     private boolean muerto;
 
-    private float retrocesoRestante;
-    private float retrocesoTotal;
-    private float tiempoRetroceso;
-    private float duracionRetroceso;
-    private int direccionRetroceso;
-
-    private boolean enRetroceso;
-
-    private static final float RETROCESO_DEFECTO = 30f;
-    private static final float DURACION_RETROCESO_DEFECTO = 0.2f;
-
     public Vida(int vidaMaxima) {
         this.vidaMaxima = vidaMaxima;
         this.vidaActual = vidaMaxima;
         this.recibiendoDanio = false;
         this.muerto = false;
-        this.enRetroceso = false;
-        this.retrocesoRestante = 0f;
     }
 
     public void recibirDolor(int cantidad) {

@@ -1,6 +1,17 @@
+enemy/goomba/goomba.png
+enemy/goomba/goomba_sorprendido.png
 libgdx.png
 maps/mapa_beta.png
 maps/mapabase.png
+maps/mapabase.tmx
+maps/textures/Objects.png
+maps/textures/decorative_cracks_walls.png
+maps/textures/goomba.png
+maps/textures/walls_floor.png
+maps/tilesets/Objetos.tsx
+maps/tilesets/Paredes.tsx
+maps/tilesets/Paredes2.tsx
+maps/tilesets/goomba.tsx
 player/Player_corriendo.png
 player/player.png
 player/player_atacando.png
