@@ -9,23 +9,23 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import ui.projecto.mecanicas.MapManager;
 import ui.projecto.personajes.Player;
 
 public class Main extends ApplicationAdapter {
     private SpriteBatch batch;
-    private OrthographicCamera camera;
     private Viewport viewport;
     private Player jugadorPrincipal;
     private GLProfiler glProfiler;
     private BitmapFont font;
-    private Texture mapabeta;
 
-    TiledMap map;
-    OrthogonalTiledMapRenderer mapRenderer;
+    MapManager mapManager;
+    private OrthographicCamera camera;
 
     private boolean fullscreen = false;
 
@@ -38,11 +38,8 @@ public class Main extends ApplicationAdapter {
 
         viewport = new FitViewport(Player.getVirtualWidth(), Player.getVirtualHeight(), camera);
 
-        mapabeta = new Texture(Gdx.files.internal("maps/mapabase.png"));
-        map = new TmxMapLoader().load("maps/mapabase.tmx");
-        mapRenderer = new OrthogonalTiledMapRenderer(map);
-
-        jugadorPrincipal = new Player(250, 250);
+        mapManager = new MapManager("maps/mapabase.tmx");
+        jugadorPrincipal = new Player(250, 250,mapManager);
 
         this.glProfiler = new GLProfiler(Gdx.graphics);
         this.glProfiler.enable();
@@ -61,26 +58,16 @@ public class Main extends ApplicationAdapter {
 
         viewport.apply();
         camera.update();
-        mapRenderer.setView(camera);
-        mapRenderer.render();
+
+        mapManager.render(camera);
 
         float deltaTime = Gdx.graphics.getDeltaTime();
         jugadorPrincipal.update(deltaTime);
 
+        batch.setProjectionMatrix(camera.combined);
+
         batch.begin();
-
-        // FONDO (debajo del jugador)
-        batch.draw(
-            mapabeta,
-            0,
-            0,
-            viewport.getWorldWidth(),
-            viewport.getWorldHeight()
-        );
-
-        // JUGADOR (encima)
         jugadorPrincipal.render(batch);
-
         batch.end();
     }
 
@@ -105,7 +92,6 @@ public class Main extends ApplicationAdapter {
         jugadorPrincipal.dispose();
         glProfiler.disable();
         font.dispose();
-        mapabeta.dispose();
 
     }
 }

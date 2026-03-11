@@ -6,11 +6,13 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import ui.projecto.mecanicas.MapManager;
 import ui.projecto.mecanicas.Vida;
 
 public class Player{
     public float x, y;
     private final com.badlogic.gdx.graphics.g2d.BitmapFont font;
+    private MapManager mapManager;
 
     private final Animation<TextureRegion> animacionIdle;
     private final Animation<TextureRegion> animacionCorrer;
@@ -91,9 +93,11 @@ public class Player{
     private static final float INTERVALO_DANY_BORDE = 0.2f;
     private static final int DANY_BORDE = 5;
 
-    public Player(float x, float y) {
+    public Player(float x, float y, MapManager mapManager) {
         this.x = x;
         this.y = y;
+        this.mapManager = mapManager;
+
         this.velocidad = VELOCIDAD_NORMAL;
         this.moviendose = false;
         this.direccionActual = 0;
@@ -277,6 +281,9 @@ public class Player{
             atacar();
         }
 
+        float newX = x;
+        float newY = y;
+
         // Detectar movimiento
         boolean moviendoDerecha = false;
         boolean moviendoIzquierda = false;
@@ -285,26 +292,46 @@ public class Player{
 
         // Movimiento
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A)) {
-            x -= velocidad * deltaTime;
+            newX -= velocidad * deltaTime;
             moviendose = true;
             moviendoIzquierda = true;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D)) {
-            x += velocidad * deltaTime;
+            newX += velocidad * deltaTime;
             moviendose = true;
             moviendoDerecha = true;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.UP) || Gdx.input.isKeyPressed(Input.Keys.W)) {
-            y += velocidad * deltaTime;
+            newY += velocidad * deltaTime;
             moviendose = true;
             moviendoArriba = true;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.DOWN) || Gdx.input.isKeyPressed(Input.Keys.S)) {
-            y -= velocidad * deltaTime;
+            newY -= velocidad * deltaTime;
             moviendose = true;
             moviendoAbajo = true;
         }
 
+        float width = getCurrentWidth() * 0.6f;
+        float height = getCurrentHeight() / 0.6f;
+
+        // Colisión horizontal
+        if (!mapManager.isBlocked(newX, y) &&
+            !mapManager.isBlocked(newX + width, y) &&
+            !mapManager.isBlocked(newX, y + height) &&
+            !mapManager.isBlocked(newX + width, y + height)) {
+
+            x = newX;
+        }
+
+        // Colisión vertical
+        if (!mapManager.isBlocked(x, newY) &&
+            !mapManager.isBlocked(x + width, newY) &&
+            !mapManager.isBlocked(x, newY + height) &&
+            !mapManager.isBlocked(x + width, newY + height)) {
+
+            y = newY;
+        }
         // Dirección para el sprite
         if (moviendoDerecha) {
             direccionActual = 1;
