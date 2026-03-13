@@ -94,6 +94,20 @@
    <object id="1" x="0" y="0" width="10.0313" height="16"/>
   </objectgroup>
  </tile>
+ <tile id="50">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="16" y="16">
+    <polygon points="0,0 0.0625,-4.9375 -2.97778,0.0222222"/>
+   </object>
+  </objectgroup>
+ </tile>
+ <tile id="51">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="16">
+    <polygon points="0,0 14,0 14.0039,-16.0039 9,-16 0.0625,-5.3125"/>
+   </object>
+  </objectgroup>
+ </tile>
  <tile id="55">
   <objectgroup draworder="index" id="2">
    <object id="1" x="2" y="0" width="12" height="16"/>
@@ -190,6 +204,18 @@
    </object>
   </objectgroup>
  </tile>
+ <tile id="74">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="16">
+    <polygon points="0,0 16,0 16,-16 13,-16"/>
+   </object>
+  </objectgroup>
+ </tile>
+ <tile id="75">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="14" height="16"/>
+  </objectgroup>
+ </tile>
  <tile id="79">
   <objectgroup draworder="index" id="2">
    <object id="1" x="2" y="0" width="12" height="16"/>
@@ -272,11 +298,34 @@
   <properties>
    <property name="colision" type="bool" value="true"/>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="3" y="0" width="13" height="16"/>
+  </objectgroup>
  </tile>
  <tile id="94">
   <properties>
    <property name="colision" type="bool" value="true"/>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="16">
+    <polygon points="0,0 0,-16 3.99609,-15.9922 3.99219,-11.9844 4.98828,-11.9922 4.99609,-13.0078 7.98438,-13.0078 9.99444,-10.9944 10.0222,-5.02222 11.9922,-4.98438 11.9922,0"/>
+   </object>
+  </objectgroup>
+ </tile>
+ <tile id="97">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="14" y="0" width="2" height="2.02222"/>
+  </objectgroup>
+ </tile>
+ <tile id="98">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="16.0039" height="2"/>
+  </objectgroup>
+ </tile>
+ <tile id="99">
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="13.0039" height="2"/>
+  </objectgroup>
  </tile>
  <tile id="103">
   <objectgroup draworder="index" id="2">
@@ -324,21 +373,41 @@
   <properties>
    <property name="colision" type="bool" value="true"/>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="4" y="16.1304">
+    <polygon points="0,0 -0.00390625,-2.13043 1.02222,-7.13043 5.97778,-11.1082 9,-11.1082 9.00556,-16.1471 12,-16.1304 12,-0.130435"/>
+   </object>
+  </objectgroup>
  </tile>
  <tile id="116">
   <properties>
    <property name="colision" type="bool" value="true"/>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0">
+    <polygon points="0,0 11.0313,0.0078125 11,13.9922 12,13.9922 12.9922,14.9922 13,16 0,16"/>
+   </object>
+  </objectgroup>
  </tile>
  <tile id="117">
   <properties>
    <property name="colision" type="bool" value="true"/>
   </properties>
+  <objectgroup draworder="index" id="3">
+   <object id="2" x="16" y="0">
+    <polygon points="0,0 0.0111111,12 -0.988889,12 -8.01563,12.0156 -10,14.9766 -13,15 -16.0056,11.9889 -16,6.98333 -16,1.98889 -14.0078,-0.0078125"/>
+   </object>
+  </objectgroup>
  </tile>
  <tile id="118">
   <properties>
    <property name="colision" type="bool" value="true"/>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0">
+    <polygon points="0,0 0,13 3,15.0111 7,15.0039 9,14.0078 10.9889,11.9889 13.0111,8 13,0.992188 12,0"/>
+   </object>
+  </objectgroup>
  </tile>
  <tile id="121">
   <objectgroup draworder="index" id="2">
@@ -438,6 +507,11 @@
   <properties>
    <property name="colision" type="bool" value="true"/>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="16" y="0">
+    <polygon points="0,0 0.0434783,11.0435 -2,11.9778 -6,12.0056 -8,10.9922 -10.0078,8.98438 -12.0056,5.00556 -12.0222,0"/>
+   </object>
+  </objectgroup>
  </tile>
  <tile id="140">
   <properties>

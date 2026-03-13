@@ -38,7 +38,7 @@ public class Main extends ApplicationAdapter {
 
         viewport = new FitViewport(Player.getVirtualWidth(), Player.getVirtualHeight(), camera);
 
-        mapManager = new MapManager("maps/mapabase.tmx");
+        mapManager = new MapManager("maps/beta/mapabase.tmx");
         jugadorPrincipal = new Player(250, 250,mapManager);
 
         this.glProfiler = new GLProfiler(Gdx.graphics);

@@ -313,7 +313,7 @@ public class Player{
         }
 
         float width = getCurrentWidth() * 0.6f;
-        float height = getCurrentHeight() / 0.6f;
+        float height = getCurrentHeight() * 0.6f;
 
         // Colisión horizontal
         if (!mapManager.isBlocked(newX, y) &&

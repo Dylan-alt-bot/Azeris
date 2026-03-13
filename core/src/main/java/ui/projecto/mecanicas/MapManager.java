@@ -1,6 +1,7 @@
 package ui.projecto.mecanicas;
 
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.maps.MapGroupLayer;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -18,7 +19,8 @@ public class MapManager {
 
         mapRenderer = new OrthogonalTiledMapRenderer(map);
 
-        collisionLayer = (TiledMapTileLayer) map.getLayers().get("Paredes");
+        MapGroupLayer roomGroupLayer = (MapGroupLayer) map.getLayers().get("Room");
+        collisionLayer = (TiledMapTileLayer) roomGroupLayer.getLayers().get("Paredes");
 
         tileSize = (int) collisionLayer.getTileWidth();
     }
