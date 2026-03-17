@@ -5,14 +5,9 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
-import com.badlogic.gdx.maps.tiled.TiledMap;
-import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
-import com.badlogic.gdx.maps.tiled.TmxMapLoader;
-import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
-import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import ui.projecto.mecanicas.MapManager;
 import ui.projecto.personajes.Player;
@@ -36,9 +31,9 @@ public class Main extends ApplicationAdapter {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Player.getVirtualWidth(), Player.getVirtualHeight());
 
-        viewport = new FitViewport(Player.getVirtualWidth(), Player.getVirtualHeight(), camera);
+        viewport = new ExtendViewport(Player.getVirtualWidth(), Player.getVirtualHeight(), camera);
 
-        mapManager = new MapManager("maps/beta/mapabase.tmx");
+        mapManager = new MapManager("maps/beta/mapabase2.tmx");
         jugadorPrincipal = new Player(250, 250,mapManager);
 
         this.glProfiler = new GLProfiler(Gdx.graphics);
@@ -57,11 +52,19 @@ public class Main extends ApplicationAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         viewport.apply();
+
+        float deltaTime = Gdx.graphics.getDeltaTime();
+
+        camera.position.set(
+            jugadorPrincipal.x + jugadorPrincipal.getCurrentWidth()/2,
+            jugadorPrincipal.y + jugadorPrincipal.getCurrentHeight()/2,
+            0
+        );
+
         camera.update();
 
         mapManager.render(camera);
 
-        float deltaTime = Gdx.graphics.getDeltaTime();
         jugadorPrincipal.update(deltaTime);
 
         batch.setProjectionMatrix(camera.combined);

@@ -357,6 +357,72 @@ public class Player{
         // Aplicar límites de pantalla
         aplicarLimites(deltaTime);
     }
+    private void iniciarSprint() {
+        if (sprintCooldown) return;
+
+        sprintando = true;
+        tiempoSprint = 0f;
+        tiempo = 0f;
+        velocidad = VELOCIDAD_SPRINT;
+        animacionActual = animacionSprintar;
+
+        sprintCooldown = true;
+        tiempoCooldownSprint = 0f;
+
+        direccionSprint = direccionActual;
+
+        // Establecer el desplazamiento restante
+        desplazamientoSprintRestante = DESPLAZAMIENTO_SPRINT;
+        if (direccionSprint == 0) {
+            direccionSprint = 1;
+        }
+    }
+
+    private void actualizarSprint(float deltaTime) {
+        tiempoSprint += deltaTime;
+        tiempo += deltaTime;
+
+        // Aplicar desplazamiento durante el sprint
+        // Aplicar desplazamiento según la dirección
+        switch (direccionSprint) {
+            case 1: // Derecha
+                x += velocidad * deltaTime;
+                break;
+            case 2: // Izquierda
+                x -= velocidad * deltaTime;
+                break;
+            case 3: // Arriba
+                y += velocidad * deltaTime;
+                break;
+            case 4: // Abajo
+                y -= velocidad * deltaTime;
+                break;
+            default: // Si no hay dirección, usar derecha por defecto
+                x += velocidad * deltaTime;
+                break;
+        }
+
+        // Verificar si el sprint ha terminado
+        if (animacionSprintar.isAnimationFinished(tiempo)) {
+            finalizarSprint();
+        }
+
+        // Aplicar límites durante el sprint
+        aplicarLimites(deltaTime);
+    }
+
+    private void finalizarSprint() {
+        sprintando = false;
+        tiempoSprint = 0f;
+        velocidad = VELOCIDAD_NORMAL;
+        switch (direccionSprint) {
+            case 1: x += 5f; break;
+            case 2: x -= 5f; break;
+            case 3: y += 5f; break;
+            case 4: y -= 5f; break;
+        }
+        animacionActual = animacionIdle;
+    }
 
     private void gestionarDanyBorde(float deltaTime) {
         float anchoActual = getCurrentWidth();
@@ -415,74 +481,6 @@ public class Player{
         animacionActual = animacionIdle;
         x = VIRTUAL_WIDTH / 2;
         y = VIRTUAL_HEIGHT / 2;
-    }
-
-
-    private void iniciarSprint() {
-        if (sprintCooldown) return;
-
-        sprintando = true;
-        tiempoSprint = 0f;
-        tiempo = 0f;
-        velocidad = VELOCIDAD_SPRINT;
-        animacionActual = animacionSprintar;
-
-        sprintCooldown = true;
-        tiempoCooldownSprint = 0f;
-
-        direccionSprint = direccionActual;
-
-        // Establecer el desplazamiento restante
-        desplazamientoSprintRestante = DESPLAZAMIENTO_SPRINT;
-        if (direccionSprint == 0) {
-            direccionSprint = 1;
-        }
-    }
-
-    private void actualizarSprint(float deltaTime) {
-        tiempoSprint += deltaTime;
-        tiempo += deltaTime;
-
-        // Aplicar desplazamiento durante el sprint
-            // Aplicar desplazamiento según la dirección
-            switch (direccionSprint) {
-                case 1: // Derecha
-                    x += velocidad * deltaTime;
-                    break;
-                case 2: // Izquierda
-                    x -= velocidad * deltaTime;
-                    break;
-                case 3: // Arriba
-                    y += velocidad * deltaTime;
-                    break;
-                case 4: // Abajo
-                    y -= velocidad * deltaTime;
-                    break;
-                default: // Si no hay dirección, usar derecha por defecto
-                    x += velocidad * deltaTime;
-                    break;
-            }
-
-        // Verificar si el sprint ha terminado
-        if (animacionSprintar.isAnimationFinished(tiempo)) {
-            finalizarSprint();
-        }
-
-        // Aplicar límites durante el sprint
-        aplicarLimites(deltaTime);
-    }
-
-    private void finalizarSprint() {
-        sprintando = false;
-        tiempoSprint = 0f;
-        velocidad = VELOCIDAD_NORMAL;
-        switch (direccionSprint) {
-            case 1: x += 5f; break;
-            case 2: x -= 5f; break;
-            case 3: y += 5f; break;
-            case 4: y -= 5f; break;
-        }
-        animacionActual = animacionIdle;
     }
 
     public void atacar() {
@@ -574,6 +572,24 @@ public class Player{
             }
         }
     }
+
+    public void renderUI(SpriteBatch batch){
+
+        font.draw(batch, "Vida: " + vida.getVidaActual() + "%", 10, 440);
+
+        float anchoBarra = 250;
+        float altoBarra = 15;
+
+        batch.setColor(0.8f, 0.2f, 0.2f, 1);
+        batch.draw(barraVida, 10, 450, anchoBarra, altoBarra);
+
+        batch.setColor(0.2f, 0.8f, 0.2f, 1);
+        float anchoVida = vida.getPorcentajeVida() * anchoBarra;
+        batch.draw(barraVida, 10, 450, anchoVida, altoBarra);
+
+        batch.setColor(1,1,1,1);
+    }
+
 
     private void aplicarLimites(float deltaTime) {
         float anchoActual = getCurrentWidth();
