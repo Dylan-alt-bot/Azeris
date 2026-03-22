@@ -10,16 +10,16 @@ import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import ui.projecto.mecanicas.MapManager;
-import ui.projecto.personajes.Player;
+import ui.projecto.personajes.Player.Player;
+import ui.projecto.personajes.Player.util.Constants;
 
 public class Main extends ApplicationAdapter {
     private SpriteBatch batch;
     private Viewport viewport;
     private Player jugadorPrincipal;
     private GLProfiler glProfiler;
-    private BitmapFont font;
 
-    MapManager mapManager;
+    private MapManager mapManager;
     private OrthographicCamera camera;
 
     private boolean fullscreen = false;
@@ -29,17 +29,16 @@ public class Main extends ApplicationAdapter {
         batch = new SpriteBatch();
 
         camera = new OrthographicCamera();
-        camera.setToOrtho(false, Player.getVirtualWidth(), Player.getVirtualHeight());
-
-        viewport = new ExtendViewport(Player.getVirtualWidth(), Player.getVirtualHeight(), camera);
+        viewport = new ExtendViewport(
+            Constants.VIRTUAL_WIDTH,
+            Constants.VIRTUAL_HEIGHT,
+            camera);
 
         mapManager = new MapManager("maps/beta/mapabase2.tmx");
         jugadorPrincipal = new Player(250, 250,mapManager);
 
         this.glProfiler = new GLProfiler(Gdx.graphics);
         this.glProfiler.enable();
-
-        font = new BitmapFont();
     }
 
     @Override
@@ -48,29 +47,31 @@ public class Main extends ApplicationAdapter {
             toggleFullscreen();
         }
 
-        Gdx.gl.glClearColor(0, 0, 0, 0);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-        viewport.apply();
-
         float deltaTime = Gdx.graphics.getDeltaTime();
 
+        jugadorPrincipal.update(deltaTime);
+
+
+
         camera.position.set(
-            jugadorPrincipal.x + jugadorPrincipal.getCurrentWidth()/2,
-            jugadorPrincipal.y + jugadorPrincipal.getCurrentHeight()/2,
+            jugadorPrincipal.x,
+            jugadorPrincipal.y,
             0
         );
 
         camera.update();
 
-        mapManager.render(camera);
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        jugadorPrincipal.update(deltaTime);
+        viewport.apply();
+
+        mapManager.render(camera);
 
         batch.setProjectionMatrix(camera.combined);
 
         batch.begin();
-        jugadorPrincipal.render(batch);
+        jugadorPrincipal.render(batch, deltaTime);
         batch.end();
     }
 
@@ -92,9 +93,6 @@ public class Main extends ApplicationAdapter {
     @Override
     public void dispose() {
         batch.dispose();
-        jugadorPrincipal.dispose();
         glProfiler.disable();
-        font.dispose();
-
     }
 }
