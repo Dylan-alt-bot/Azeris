@@ -8,6 +8,7 @@ import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import io.github.azerisproyecte.levelGenerator.Door;
 import io.github.azerisproyecte.levelGenerator.DungeonGenerator;
 import io.github.azerisproyecte.levelGenerator.Room;
 
@@ -105,7 +106,27 @@ public class FirstScreen extends ScreenAdapter implements InputProcessor {
         // Draw each tile in the room
         for (int i = 0; i < room.width; i++) {
             for (int j = 0; j < room.height; j++) {
-                Texture texture = room.tiles[i][j] ? wallTexture : floorTexture;
+                Texture texture;
+
+                // Check if this tile is a door
+                boolean isDoor = false;
+                for (Door door : room.doors) {
+                    // Check if door is on this wall at this position
+                    if ((door.dir == Door.Direction.NORTH && j == room.height - 1 && i == door.position) ||
+                        (door.dir == Door.Direction.SOUTH && j == 0 && i == door.position) ||
+                        (door.dir == Door.Direction.EAST && i == room.width - 1 && j == door.position) ||
+                        (door.dir == Door.Direction.WEST && i == 0 && j == door.position)) {
+                        isDoor = true;
+                        break;
+                    }
+                }
+
+                if (isDoor) {
+                    // Use a special texture for doors (create a green placeholder for now)
+                    texture = doorTexture; // You'll need to create this
+                } else {
+                    texture = room.tiles[i][j] ? wallTexture : floorTexture;
+                }
 
                 float tileX = worldX + i * TILE_SIZE;
                 float tileY = worldY + j * TILE_SIZE;

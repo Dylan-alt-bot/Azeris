@@ -28,15 +28,7 @@ public class Room {
             }
         }
 
-    public static class Door {
-        public int position; // Position in room coordinates
-        public Direction direction;
-        public Room connectedRoom;
 
-        public enum Direction {
-            NORTH, SOUTH, EAST, WEST
-        }
-    }
 
 }
 

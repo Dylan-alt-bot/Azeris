@@ -1,9 +1,8 @@
 package io.github.azerisproyecte.levelGenerator;
 
 // DungeonGenerator.java
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+
+import java.util.*;
 
 public class DungeonGenerator {
     private Random random;
@@ -55,6 +54,8 @@ public class DungeonGenerator {
             }
         }
 
+        addDoorsToAllConnections();
+
         return rooms;
     }
 
@@ -70,7 +71,7 @@ public class DungeonGenerator {
             Room existingRoom = rooms.get(random.nextInt(rooms.size()));
 
             // Pick a random direction
-            Room.Door.Direction dir = Room.Door.Direction.values()[random.nextInt(4)];
+            Door.Direction dir = Door.Direction.values()[random.nextInt(4)];
 
             int newGridX = existingRoom.x;
             int newGridY = existingRoom.y;
@@ -160,64 +161,211 @@ public class DungeonGenerator {
         return false;
     }
 
-    private void addDoorsBetweenRooms(Room room1, Room room2, Room.Door.Direction dir,
-                                      float room1X, float room1Y,
-                                      float room2X, float room2Y) {
-        // Add door to room1
-        Room.Door door1 = new Room.Door();
-        door1.direction = dir;
-
-        // Calculate door position based on where rooms meet
-        switch (dir) {
-            case EAST:
-                // Door on room1's east wall
-                door1.position = (int)(room2Y - room1Y + room2.height/2);
-                break;
-            case WEST:
-                // Door on room1's west wall
-                door1.position = (int)(room2Y - room1Y + room2.height/2);
-                break;
-            case NORTH:
-                // Door on room1's north wall
-                door1.position = (int)(room2X - room1X + room2.width/2);
-                break;
-            case SOUTH:
-                // Door on room1's south wall
-                door1.position = (int)(room2X - room1X + room2.width/2);
-                break;
+    private void addDoorsToAllConnections() {
+        // Clear existing doors
+        for (Room room : rooms) {
+            room.doors.clear();
         }
-        room1.doors.add(door1);
 
-        // Add door to room2 (opposite direction)
-        Room.Door door2 = new Room.Door();
-        door2.direction = getOppositeDirection(dir);
+        // Check every grid cell for adjacent rooms
+        for (int x = 0; x < gridWidth; x++) {
+            for (int y = 0; y < gridHeight; y++) {
+                Room currentRoom = roomGrid[x][y];
 
-        switch (getOppositeDirection(dir)) {
-            case EAST:
-                door2.position = (int)(room1Y - room2Y + room1.height/2);
-                break;
-            case WEST:
-                door2.position = (int)(room1Y - room2Y + room1.height/2);
-                break;
-            case NORTH:
-                door2.position = (int)(room1X - room2X + room1.width/2);
-                break;
-            case SOUTH:
-                door2.position = (int)(room1X - room2X + room1.width/2);
-                break;
+                // Only proceed if there IS a room here
+                if (currentRoom == null) continue;
+
+                // Check neighbor to the EAST
+                if (x + 1 < gridWidth) {
+                    Room eastRoom = roomGrid[x + 1][y];
+                    if (eastRoom != null) {
+                        addDoorsBetweenRooms(currentRoom, eastRoom, Door.Direction.EAST);
+                    }
+                }
+
+                // Check neighbor to the NORTH
+                if (y + 1 < gridHeight) {
+                    Room northRoom = roomGrid[x][y + 1];
+                    if (northRoom != null) {
+                        addDoorsBetweenRooms(currentRoom, northRoom, Door.Direction.NORTH);
+                    }
+                }
+            }
         }
-        room2.doors.add(door2);
+
+        ensureAllRoomsAccessible();
     }
 
-    private Room.Door.Direction getOppositeDirection(Room.Door.Direction dir) {
-        switch (dir) {
-            case NORTH: return Room.Door.Direction.SOUTH;
-            case SOUTH: return Room.Door.Direction.NORTH;
-            case EAST: return Room.Door.Direction.WEST;
-            case WEST: return Room.Door.Direction.EAST;
-            default: return dir;
+    private void addDoorsBetweenRooms(Room room1, Room room2, Door.Direction direction) {
+
+        if (room1 == null || room2 == null) {
+            System.err.println("Error: Attempted to add doors between null rooms");
+            return;
+        }
+
+        float room1X = roomWorldX[room1.x][room1.y];
+        float room1Y = roomWorldY[room1.x][room1.y];
+        float room2X = roomWorldX[room2.x][room2.y];
+        float room2Y = roomWorldY[room2.x][room2.y];
+
+        switch (direction) {
+            case EAST:
+                // room1 is to the WEST of room2
+                int startY = Math.max(0, (int) (room2Y - room1Y));
+                int endY = Math.min(room1.height - 1, (int) (room2Y + room2.height - room1Y - 1));
+
+                if (endY >= startY) {
+                    int doorY = startY + (endY - startY) / 2;
+
+                    Door door1 = new Door();
+                    door1.dir = Door.Direction.EAST;
+                    door1.position = doorY;
+                    door1.connectedRoom = room2;
+                    room1.doors.add(door1);
+
+                    Door door2 = new Door();
+                    door2.dir = Door.Direction.WEST;
+                    door2.position = (int) (room1Y + doorY - room2Y);
+                    door2.connectedRoom = room1;
+                    room2.doors.add(door2);
+                }
+                break;
+
+            case WEST:
+                // room1 is to the EAST of room2
+                startY = Math.max(0, (int) (room2Y - room1Y));
+                endY = Math.min(room1.height - 1, (int) (room2Y + room2.height - room1Y - 1));
+
+                if (endY >= startY) {
+                    int doorY = startY + (endY - startY) / 2;
+
+                    Door door1 = new Door();
+                    door1.dir = Door.Direction.WEST;
+                    door1.position = doorY;
+                    door1.connectedRoom = room2;
+                    room1.doors.add(door1);
+
+                    Door door2 = new Door();
+                    door2.dir = Door.Direction.EAST;
+                    door2.position = (int) (room1Y + doorY - room2Y);
+                    door2.connectedRoom = room1;
+                    room2.doors.add(door2);
+                }
+                break;
+
+            case NORTH:
+                // room1 is to the SOUTH of room2
+                int startX = Math.max(0, (int) (room2X - room1X));
+                int endX = Math.min(room1.width - 1, (int) (room2X + room2.width - room1X - 1));  // FIXED: Use width, not height
+
+                if (endX >= startX) {
+                    int doorX = startX + (endX - startX) / 2;
+
+                    Door door1 = new Door();
+                    door1.dir = Door.Direction.NORTH;
+                    door1.position = doorX;
+                    door1.connectedRoom = room2;
+                    room1.doors.add(door1);
+
+                    Door door2 = new Door();
+                    door2.dir = Door.Direction.SOUTH;
+                    door2.position = (int) (room1X + doorX - room2X);
+                    door2.connectedRoom = room1;
+                    room2.doors.add(door2);
+                }
+                break;
+
+            case SOUTH:
+                // room1 is to the NORTH of room2
+                startX = Math.max(0, (int) (room2X - room1X));
+                endX = Math.min(room1.width - 1, (int) (room2X + room2.width - room1X - 1));
+
+                if (endX >= startX) {
+                    int doorX = startX + (endX - startX) / 2;
+
+                    Door door1 = new Door();
+                    door1.dir = Door.Direction.SOUTH;
+                    door1.position = doorX;
+                    door1.connectedRoom = room2;
+                    room1.doors.add(door1);
+
+                    Door door2 = new Door();
+                    door2.dir = Door.Direction.NORTH;
+                    door2.position = (int) (room1X + doorX - room2X);
+                    door2.connectedRoom = room1;
+                    room2.doors.add(door2);
+                }
+                break;
         }
     }
+
+    private void ensureAllRoomsAccessible() {
+
+        // Creamos un hashset para tener en cuenta todos las habitaciones visitados
+        HashSet<Room> visited = new HashSet<>();
+
+        // Empezamos con la primera habitacion y seguimos en orden
+        Room startRoom = rooms.get(0);
+        Queue<Room> queue = new LinkedList<>();
+        queue.add(startRoom);
+        visited.add(startRoom);
+
+        while (!queue.isEmpty()) {
+            Room current = queue.poll();
+
+            // El bucle revisa todas las puertas/conexiones de la habitacion actual.
+            for (Door door : current.doors) {
+                Room connected = door.connectedRoom;
+                if (connected != null && !visited.contains(connected)) {
+                    visited.add(connected);
+                    queue.add(connected);
+                }
+            }
+        }
+
+        // Si hay menos habitaciones visitadas de las que realmente existen, entonces
+        // hay habitaciones que no tienen puerta y por tant no se han visitado.
+        if (visited.size() < rooms.size()) {
+            System.out.println("Warning: Some rooms are isolated! Adding additional doors...");
+
+            // Find isolated rooms and connect them to the main group
+            for (Room room : rooms) {
+                if (!visited.contains(room)) {
+                    // Find the nearest room in the main group
+                    connectRoomToMainGroup(room, visited);
+                }
+            }
+        }
+    }
+
+    private void connectRoomToMainGroup(Room isolatedRoom, java.util.Set<Room> mainGroup) {
+        // Check all grid neighbors to find a connection to the main group
+        int[] dx = {0, 1, 0, -1};
+        int[] dy = {1, 0, -1, 0};
+            Door.Direction[] dirs = {
+            Door.Direction.NORTH,
+            Door.Direction.EAST,
+            Door.Direction.SOUTH,
+            Door.Direction.WEST
+        };
+
+        for (int i = 0; i < 4; i++) {
+            int checkX = isolatedRoom.x + dx[i];
+            int checkY = isolatedRoom.y + dy[i];
+
+            if (isValidGridPosition(checkX, checkY)) {
+                Room neighbor = roomGrid[checkX][checkY];
+                if (neighbor != null && mainGroup.contains(neighbor)) {
+                    // Found a connection! Add doors between them
+                    addDoorsBetweenRooms(isolatedRoom, neighbor, dirs[i]);
+                    System.out.println("Added emergency door to connect isolated room");
+                    return;
+                }
+            }
+        }
+    }
+
+
 
     private boolean isValidGridPosition(int x, int y) {
         return x >= 0 && x < gridWidth && y >= 0 && y < gridHeight;
