@@ -14,6 +14,9 @@ public class DungeonGenerator {
     private float[][] roomWorldX;
     private float[][] roomWorldY;
 
+    private int uniformRoomWidth;
+    private int uniformRoomHeight;
+
     public DungeonGenerator(int gridWidth, int gridHeight) {
         this.random = new Random();
         this.gridWidth = gridWidth;
@@ -28,7 +31,10 @@ public class DungeonGenerator {
     public List<Room> generateDungeon(int roomCount) {
         rooms.clear();
 
-        //clear the grid
+
+
+        uniformRoomWidth = random.nextInt(5) + 10;  // Random width between 10-14
+        uniformRoomHeight = random.nextInt(5) + 10;
 
         for (int i = 0; i < gridWidth; i++) {
             for (int j = 0; j < gridHeight; j++) {
@@ -40,7 +46,7 @@ public class DungeonGenerator {
         int startX = gridWidth / 2;
         int startY = gridHeight / 2;
 
-        Room startRoom = createRandomRoom(startX, startY);
+        Room startRoom = createUniformRoom(startX, startY);
         roomGrid[startX][startY] = startRoom;
         roomWorldX[startX][startY] = 0;  // First room starts at 0
         roomWorldY[startX][startY] = 0;
@@ -59,16 +65,18 @@ public class DungeonGenerator {
         return rooms;
     }
 
-
-
+    // CHANGED: Now uses uniform room size instead of random
+    private Room createUniformRoom(int gridX, int gridY) {
+        return new Room(gridX, gridY, uniformRoomWidth, uniformRoomHeight);
+    }
 
     private boolean addNewRoom() {
         if (rooms.isEmpty()) return false;
 
         // Try multiple times to place a room
-        for (int attempts = 0; attempts < 500; attempts++) {
-            // Pick a random existing room to attach to
-            Room existingRoom = rooms.get(random.nextInt(rooms.size()));
+        for (int attempts = 0; attempts < 1000; attempts++) { // Increased attempts
+            // Pick a random existing room to attach to - PREFER rooms with fewer neighbors
+            Room existingRoom = pickRoomWithSpace();
 
             // Pick a random direction
             Door.Direction dir = Door.Direction.values()[random.nextInt(4)];
@@ -87,73 +95,139 @@ public class DungeonGenerator {
             // Check if grid position is valid and empty
             if (isValidGridPosition(newGridX, newGridY) && roomGrid[newGridX][newGridY] == null) {
 
+                // NEW: Check if this direction has FEWER neighbors (prefer open space)
+                if (hasTooManyNeighbors(newGridX, newGridY)) {
+                    continue;
+                }
+
                 // Calculate world position based on the existing room's END position
                 float newWorldX = 0;
                 float newWorldY = 0;
 
-                // Get the existing room's start position
                 float existingStartX = roomWorldX[existingRoom.x][existingRoom.y];
                 float existingStartY = roomWorldY[existingRoom.x][existingRoom.y];
-
-                // Calculate where the existing room ENDS
                 float existingEndX = existingStartX + existingRoom.width;
                 float existingEndY = existingStartY + existingRoom.height;
 
-                // Create a potential new room (we need its size to calculate position)
-                Room newRoom = createRandomRoom(newGridX, newGridY);
+                Room newRoom = createUniformRoom(newGridX, newGridY);
 
-                // Position the new room based on direction
+                // Position the new room based on direction (same overlap logic)
                 switch (dir) {
                     case EAST:
-                        // New room starts where existing room ends ADDED OVERLAP -1
-                        newWorldX = existingEndX -1;
-                        newWorldY = existingStartY; // Align vertically
+                        newWorldX = existingEndX - 1;
+                        newWorldY = existingStartY;
                         break;
                     case WEST:
-                        // New room ends where existing room starts ADDED OVERLAP +1
                         newWorldX = existingStartX - newRoom.width + 1;
                         newWorldY = existingStartY;
                         break;
                     case NORTH:
-                        // New room starts where existing room ends (vertically) ADDED OVERLAP -1
                         newWorldX = existingStartX;
                         newWorldY = existingEndY - 1;
                         break;
                     case SOUTH:
-                        // New room ends where existing room starts (vertically) ADDED OVERLAP +1
                         newWorldX = existingStartX;
-                        newWorldY = existingStartY - newRoom.height +1;
+                        newWorldY = existingStartY - newRoom.height + 1;
                         break;
                 }
 
-                // Check if this position overlaps with any existing room
-                boolean overlaps = false;
-                for (Room room : rooms) {
-                    if (room == existingRoom) continue; // Skip the room we're attaching to
-
-                    float roomX = roomWorldX[room.x][room.y];
-                    float roomY = roomWorldY[room.x][room.y];
-                    float roomEndX = roomX + room.width;
-                    float roomEndY = roomY + room.height;
-
-                    float newEndX = newWorldX + newRoom.width;
-                    float newEndY = newWorldY + newRoom.height;
-
-                    // Check for overlap (allowing them to touch but not intersect beyond the shared wall)
-                    if (newWorldX < roomEndX - 0.1f && newEndX > roomX + 0.1f &&
-                        newWorldY < roomEndY - 0.1f && newEndY > roomY + 0.1f) {
-                        overlaps = true;
-                        break;
-                    }
-                }
-
-                if (!overlaps) {
+                // RELAXED overlap check for uniform sizes
+                if (!overlapsRelaxed(newRoom, newWorldX, newWorldY, existingRoom)) {
                     // Place the room!
                     roomGrid[newGridX][newGridY] = newRoom;
                     roomWorldX[newGridX][newGridY] = newWorldX;
                     roomWorldY[newGridX][newGridY] = newWorldY;
                     rooms.add(newRoom);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
+    // NEW: Prefer rooms with fewer neighbors (encourages branching)
+    private Room pickRoomWithSpace() {
+        List<Room> candidates = new ArrayList<>();
+        List<Integer> weights = new ArrayList<>();
+
+        int totalWeight = 0;
+
+        for (Room room : rooms) {
+            int neighborCount = countNeighbors(room);
+            int weight = Math.max(1, 5 - neighborCount); // Rooms with fewer neighbors get higher weight
+
+            candidates.add(room);
+            weights.add(weight);
+            totalWeight += weight;
+        }
+
+        // Weighted random selection
+        int randomWeight = random.nextInt(totalWeight);
+        int currentWeight = 0;
+
+        for (int i = 0; i < candidates.size(); i++) {
+            currentWeight += weights.get(i);
+            if (randomWeight < currentWeight) {
+                return candidates.get(i);
+            }
+        }
+
+        return candidates.get(candidates.size() - 1); // Fallback
+    }
+
+    // NEW: Count how many neighbors a room has
+    private int countNeighbors(Room room) {
+        int count = 0;
+        int[] dx = {0, 1, 0, -1};
+        int[] dy = {1, 0, -1, 0};
+
+        for (int i = 0; i < 4; i++) {
+            int nx = room.x + dx[i];
+            int ny = room.y + dy[i];
+            if (isValidGridPosition(nx, ny) && roomGrid[nx][ny] != null) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    // NEW: Skip positions with too many neighbors (prevents overcrowding)
+    private boolean hasTooManyNeighbors(int gridX, int gridY) {
+        int neighborCount = 0;
+        int[] dx = {0, 1, 0, -1, 1, 1, -1, -1}; // Include diagonals
+        int[] dy = {1, 0, -1, 0, 1, -1, 1, -1};
+
+        for (int i = 0; i < 8; i++) {
+            int nx = gridX + dx[i];
+            int ny = gridY + dy[i];
+            if (isValidGridPosition(nx, ny) && roomGrid[nx][ny] != null) {
+                neighborCount++;
+            }
+        }
+
+        return neighborCount > 3; // Allow max 3 neighbors (including the one we're attaching to)
+    }
+
+    // NEW: Relaxed overlap detection for uniform sizes
+    private boolean overlapsRelaxed(Room newRoom, float newWorldX, float newWorldY, Room skipRoom) {
+        float newEndX = newWorldX + newRoom.width;
+        float newEndY = newWorldY + newRoom.height;
+
+        for (Room room : rooms) {
+            if (room == skipRoom) continue;
+
+            float roomX = roomWorldX[room.x][room.y];
+            float roomY = roomWorldY[room.x][room.y];
+            float roomEndX = roomX + room.width;
+            float roomEndY = roomY + room.height;
+
+            // More lenient overlap check - allow closer proximity
+            if (newWorldX < roomEndX + 2f && newEndX > roomX - 2f &&
+                newWorldY < roomEndY + 2f && newEndY > roomY - 2f) {
+
+                // Still prevent actual interior overlap
+                if (newWorldX < roomEndX - 1f && newEndX > roomX + 1f &&
+                    newWorldY < roomEndY - 1f && newEndY > roomY + 1f) {
                     return true;
                 }
             }
@@ -197,11 +271,6 @@ public class DungeonGenerator {
     }
 
     private void addDoorsBetweenRooms(Room room1, Room room2, Door.Direction direction) {
-
-        if (room1 == null || room2 == null) {
-            System.err.println("Error: Attempted to add doors between null rooms");
-            return;
-        }
 
         float room1X = roomWorldX[room1.x][room1.y];
         float room1Y = roomWorldY[room1.x][room1.y];
@@ -369,12 +438,6 @@ public class DungeonGenerator {
 
     private boolean isValidGridPosition(int x, int y) {
         return x >= 0 && x < gridWidth && y >= 0 && y < gridHeight;
-    }
-
-    private Room createRandomRoom(int gridX, int gridY) {
-        int roomWidth = random.nextInt(5) + 10;
-        int roomHeight = random.nextInt(5) + 10;
-        return new Room(gridX, gridY, roomWidth, roomHeight);
     }
 
     // Get world position for a room (used by FirstScreen)
