@@ -13,7 +13,7 @@ public class Constants {
     public static final float DURACION_MUERTE = 2.5f;
 
     public static final float COOLDOWN_SPRINT = 2f;
-    public static final float SPRINT_IMPULSE = 50f;
+    public static final float SPRINT_IMPULSE = 100f;
 
     public static final float RETROCESO = 40f;
 }

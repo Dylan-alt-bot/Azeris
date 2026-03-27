@@ -10,8 +10,11 @@ import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import ui.projecto.mecanicas.MapManager;
+import ui.projecto.personajes.Enemies.Enemy;
 import ui.projecto.personajes.Player.Player;
 import ui.projecto.personajes.Player.util.Constants;
+
+import java.util.*;
 
 public class Main extends ApplicationAdapter {
     private SpriteBatch batch;
@@ -21,25 +24,40 @@ public class Main extends ApplicationAdapter {
 
     private MapManager mapManager;
     private OrthographicCamera camera;
+    private OrthographicCamera uiCamera;
+    private BitmapFont font;
+
+    private List<Enemy> enemies;
 
     private boolean fullscreen = false;
 
     @Override
     public void create() {
         batch = new SpriteBatch();
-
         camera = new OrthographicCamera();
         viewport = new ExtendViewport(
             Constants.VIRTUAL_WIDTH,
             Constants.VIRTUAL_HEIGHT,
-            camera);
+            camera
+        );
+
+        uiCamera = new OrthographicCamera();
+        uiCamera.setToOrtho(false, Constants.VIRTUAL_WIDTH, Constants.VIRTUAL_HEIGHT);
 
         mapManager = new MapManager("maps/beta/mapabase2.tmx");
-        jugadorPrincipal = new Player(250, 250,mapManager);
+        jugadorPrincipal = new Player(250, 250, mapManager);
+
+        font = new BitmapFont();
+
+        enemies = new ArrayList<>();
+        for (float[] pos : mapManager.getRandomEnemySpawns()) {
+            enemies.add(new Enemy(pos[0], pos[1], mapManager));
+        }
 
         this.glProfiler = new GLProfiler(Gdx.graphics);
         this.glProfiler.enable();
     }
+
 
     @Override
     public void render() {
@@ -50,8 +68,6 @@ public class Main extends ApplicationAdapter {
         float deltaTime = Gdx.graphics.getDeltaTime();
 
         jugadorPrincipal.update(deltaTime);
-
-
 
         camera.position.set(
             jugadorPrincipal.x,
@@ -69,10 +85,33 @@ public class Main extends ApplicationAdapter {
         mapManager.render(camera);
 
         batch.setProjectionMatrix(camera.combined);
-
         batch.begin();
         jugadorPrincipal.render(batch, deltaTime);
         batch.end();
+
+        batch.setProjectionMatrix(uiCamera.combined);
+        batch.begin();
+
+        if (jugadorPrincipal.sprintOnCooldown()) {
+            float remaining = jugadorPrincipal.getSprintCooldown();
+            String text = String.format("Sprint: %.2f s", remaining);
+            font.draw(batch, text, 20, 460);
+        }
+        batch.end();
+
+        batch.setProjectionMatrix(uiCamera.combined);
+        batch.begin();
+        batch.end();
+
+        for (Enemy enemy : enemies) {
+            enemy.render(batch);
+        }
+        for (Enemy enemy : enemies) {
+            if (jugadorPrincipal.collidesWithEnemy(enemy)) {
+                System.out.println("Colisión con enemigo");
+            }
+        }
+
     }
 
 

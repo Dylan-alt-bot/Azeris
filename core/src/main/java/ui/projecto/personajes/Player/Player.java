@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import ui.projecto.mecanicas.MapManager;
 import ui.projecto.mecanicas.Vida;
+import ui.projecto.personajes.Enemies.Enemy;
 import ui.projecto.personajes.Player.animacion.AnimationLoader;
 import ui.projecto.personajes.Player.animacion.AnimationManager;
 import ui.projecto.personajes.Player.personaje.PlayerState;
@@ -63,7 +64,7 @@ public class Player{
 
         animations.add(PlayerState.IDLE, new Animation<>(0.08f, AnimationLoader.load(idle, 5, 5)));
         animations.add(PlayerState.RUN, new Animation<>(0.04f, AnimationLoader.load(run, 4, 4)));
-        animations.add(PlayerState.ATTACK, new Animation<>(Constants.DURACION_ATAQUE / 12f, AnimationLoader.load(attack, 4, 3)));
+        animations.add(PlayerState.ATTACK, new Animation<>(Constants.DURACION_ATAQUE / 20f, AnimationLoader.load(attack, 4, 3)));
         animations.add(PlayerState.SPRINT, new Animation<>(Constants.DURACION_SPRINT / 12f, AnimationLoader.load(sprint, 4, 3)));
         animations.add(PlayerState.HURT, new Animation<>(Constants.DURACION_DOLOR / 9f, AnimationLoader.load(hurt, 3, 3)));
         animations.add(PlayerState.DEAD, new Animation<>(Constants.DURACION_MUERTE / 42f, AnimationLoader.load(dead, 7, 6)));
@@ -120,7 +121,7 @@ public class Player{
             lastDirY = -1;
         }
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && !sprintCooldown){
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && !sprintCooldown && state != PlayerState.ATTACK){
             if (state != PlayerState.SPRINT){
                 state = PlayerState.SPRINT;
                 velocidad = Constants.VELOCIDAD_SPRINT;
@@ -149,7 +150,10 @@ public class Player{
         }
 
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)){
-            if (state != PlayerState.ATTACK) {
+            if (state != PlayerState.ATTACK && state != PlayerState.SPRINT) {
+                velocidad = Constants.VELOCIDAD;
+                sprintImpulseRemaining = 0;
+
                 state = PlayerState.ATTACK;
                 attackTimer = 0;
                 tiempo = 0;
@@ -157,8 +161,9 @@ public class Player{
             }
         }
 
-        if (!map.isBlocked(newX, y)) x = newX;
-        if (!map.isBlocked(x, newY)) y = newY;
+
+        if (collides(newX, y)) x = newX;
+        if (collides(x, newY)) y = newY;
 
         if (state == PlayerState.SPRINT){
             sprintTimer += delta;
@@ -201,4 +206,34 @@ public class Player{
     public float getTime() {
         return tiempo;
     }
+
+    private boolean collides(float newX, float newY){
+        float hitboxWidth = 36f;
+        float hitboxHeight = 10f;
+        float offsetX = 14f;
+        float offsetY = 10f;
+        return !map.isBlocked(
+            newX + offsetX,
+            newY + offsetY,
+            hitboxWidth,
+            hitboxHeight
+        );
+    }
+
+    public float getSprintCooldown(){
+        if (!sprintCooldown) return 0;
+        return Constants.COOLDOWN_SPRINT - cooldownTimer;
+    }
+
+    public boolean sprintOnCooldown(){
+        return sprintCooldown;
+    }
+
+    public boolean collidesWithEnemy(Enemy enemy){
+        float width = 40f;
+        float height = 40f;
+
+        return enemy.collides(x, y, width, height);
+    }
+
 }
