@@ -86,7 +86,13 @@ public class Main extends ApplicationAdapter {
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
+
         jugadorPrincipal.render(batch, deltaTime);
+
+        for (Enemy enemy : enemies) {
+            enemy.render(batch);
+        }
+
         batch.end();
 
         batch.setProjectionMatrix(uiCamera.combined);
@@ -94,24 +100,16 @@ public class Main extends ApplicationAdapter {
 
         if (jugadorPrincipal.sprintOnCooldown()) {
             float remaining = jugadorPrincipal.getSprintCooldown();
-            String text = String.format("Sprint: %.2f s", remaining);
+            String text = String.format("Sprint: %.1f s", remaining);
             font.draw(batch, text, 20, 460);
         }
+
         batch.end();
+
 
         batch.setProjectionMatrix(uiCamera.combined);
         batch.begin();
         batch.end();
-
-        for (Enemy enemy : enemies) {
-            enemy.render(batch);
-        }
-        for (Enemy enemy : enemies) {
-            if (jugadorPrincipal.collidesWithEnemy(enemy)) {
-                System.out.println("Colisión con enemigo");
-            }
-        }
-
     }
 
 

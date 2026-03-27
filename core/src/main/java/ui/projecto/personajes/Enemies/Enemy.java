@@ -13,7 +13,7 @@ public class Enemy {
         this.x = x;
         this.y = y;
         this.map = map;
-        this.texture = new Texture("enemies/goomba/goomba_sorprendido.png");
+        this.texture = new Texture("enemy/goomba/goomba_sorprendido.png");
     }
 
     public void render(SpriteBatch batch) {

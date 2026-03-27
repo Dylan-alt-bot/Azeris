@@ -72,6 +72,8 @@ public class MapManager {
         List<float[]> selected = new ArrayList<>();
         Random random = new Random();
 
+        if (enemySpawns.isEmpty()) return selected;
+
         int maxEnemies = Math.min(3, enemySpawns.size());
         int count = random.nextInt(maxEnemies) + 1;
 
@@ -83,6 +85,8 @@ public class MapManager {
             copy.remove(index);
         }
 
+        System.out.println("Layer Entities: " + map.getLayers().get("Entities"));
+        System.out.println("Enemy spawns detectados: " + enemySpawns.size());
         return selected;
     }
 }
