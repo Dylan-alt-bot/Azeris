@@ -1,4 +1,4 @@
-package ui.projecto.personajes.Player.animacion;
+package ui.projecto.mecanicas;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;

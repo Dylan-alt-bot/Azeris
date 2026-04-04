@@ -10,9 +10,10 @@ import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import ui.projecto.mecanicas.MapManager;
-import ui.projecto.personajes.Enemies.Enemy;
+import ui.projecto.personajes.Enemies.goomba.Goomba;
 import ui.projecto.personajes.Player.Player;
-import ui.projecto.personajes.Player.util.Constants;
+import ui.projecto.personajes.Player.PlayerUI;
+import ui.projecto.personajes.Player.util.ConstantsPlayer;
 
 import java.util.*;
 
@@ -27,7 +28,8 @@ public class Main extends ApplicationAdapter {
     private OrthographicCamera uiCamera;
     private BitmapFont font;
 
-    private List<Enemy> enemies;
+    private PlayerUI playerUI;
+    private List<Goomba> enemies;
 
     private boolean fullscreen = false;
 
@@ -36,22 +38,23 @@ public class Main extends ApplicationAdapter {
         batch = new SpriteBatch();
         camera = new OrthographicCamera();
         viewport = new ExtendViewport(
-            Constants.VIRTUAL_WIDTH,
-            Constants.VIRTUAL_HEIGHT,
+            ConstantsPlayer.VIRTUAL_WIDTH,
+            ConstantsPlayer.VIRTUAL_HEIGHT,
             camera
         );
 
         uiCamera = new OrthographicCamera();
-        uiCamera.setToOrtho(false, Constants.VIRTUAL_WIDTH, Constants.VIRTUAL_HEIGHT);
+        uiCamera.setToOrtho(false, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
 
-        mapManager = new MapManager("maps/beta/mapabase2.tmx");
+        mapManager = new MapManager("maps/beta/mapabase.tmx");
         jugadorPrincipal = new Player(250, 250, mapManager);
+        playerUI = new PlayerUI(jugadorPrincipal);
 
         font = new BitmapFont();
 
         enemies = new ArrayList<>();
         for (float[] pos : mapManager.getRandomEnemySpawns()) {
-            enemies.add(new Enemy(pos[0], pos[1], mapManager));
+            enemies.add(new Goomba(pos[0], pos[1], mapManager));
         }
 
         this.glProfiler = new GLProfiler(Gdx.graphics);
@@ -89,8 +92,9 @@ public class Main extends ApplicationAdapter {
 
         jugadorPrincipal.render(batch, deltaTime);
 
-        for (Enemy enemy : enemies) {
-            enemy.render(batch);
+        for (Goomba goomba : enemies) {
+            goomba.update(deltaTime);
+            goomba.render(batch);
         }
 
         batch.end();
@@ -101,15 +105,11 @@ public class Main extends ApplicationAdapter {
         if (jugadorPrincipal.sprintOnCooldown()) {
             float remaining = jugadorPrincipal.getSprintCooldown();
             String text = String.format("Sprint: %.1f s", remaining);
-            font.draw(batch, text, 20, 460);
+            font.draw(batch, text, 20, 420);
         }
 
         batch.end();
-
-
-        batch.setProjectionMatrix(uiCamera.combined);
-        batch.begin();
-        batch.end();
+        playerUI.render();
     }
 
 
@@ -131,5 +131,6 @@ public class Main extends ApplicationAdapter {
     public void dispose() {
         batch.dispose();
         glProfiler.disable();
+        playerUI.dispose();
     }
 }

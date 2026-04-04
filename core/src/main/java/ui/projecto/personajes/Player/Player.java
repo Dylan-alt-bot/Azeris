@@ -7,12 +7,12 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import ui.projecto.mecanicas.MapManager;
 import ui.projecto.mecanicas.Vida;
-import ui.projecto.personajes.Enemies.Enemy;
-import ui.projecto.personajes.Player.animacion.AnimationLoader;
+import ui.projecto.personajes.Enemies.goomba.Goomba;
+import ui.projecto.mecanicas.AnimationLoader;
 import ui.projecto.personajes.Player.animacion.AnimationManager;
-import ui.projecto.personajes.Player.personaje.PlayerState;
+import ui.projecto.personajes.Player.estado.PlayerState;
 import ui.projecto.personajes.Player.render.PlayerRenderer;
-import ui.projecto.personajes.Player.util.Constants;
+import ui.projecto.personajes.Player.util.ConstantsPlayer;
 
 public class Player{
     public float x, y;
@@ -36,7 +36,7 @@ public class Player{
     private float attackTimer = 0f;
     private float hurtTimer = 0f;
 
-    private float velocidad = Constants.VELOCIDAD;
+    private float velocidad = ConstantsPlayer.VELOCIDAD;
     private float lastDirX = 0f;
     private float lastDirY = 0f;
 
@@ -64,10 +64,10 @@ public class Player{
 
         animations.add(PlayerState.IDLE, new Animation<>(0.08f, AnimationLoader.load(idle, 5, 5)));
         animations.add(PlayerState.RUN, new Animation<>(0.04f, AnimationLoader.load(run, 4, 4)));
-        animations.add(PlayerState.ATTACK, new Animation<>(Constants.DURACION_ATAQUE / 20f, AnimationLoader.load(attack, 4, 3)));
-        animations.add(PlayerState.SPRINT, new Animation<>(Constants.DURACION_SPRINT / 12f, AnimationLoader.load(sprint, 4, 3)));
-        animations.add(PlayerState.HURT, new Animation<>(Constants.DURACION_DOLOR / 9f, AnimationLoader.load(hurt, 3, 3)));
-        animations.add(PlayerState.DEAD, new Animation<>(Constants.DURACION_MUERTE / 42f, AnimationLoader.load(dead, 7, 6)));
+        animations.add(PlayerState.ATTACK, new Animation<>(ConstantsPlayer.DURACION_ATAQUE / 20f, AnimationLoader.load(attack, 4, 3)));
+        animations.add(PlayerState.SPRINT, new Animation<>(ConstantsPlayer.DURACION_SPRINT / 12f, AnimationLoader.load(sprint, 4, 3)));
+        animations.add(PlayerState.HURT, new Animation<>(ConstantsPlayer.DURACION_DOLOR / 9f, AnimationLoader.load(hurt, 3, 3)));
+        animations.add(PlayerState.DEAD, new Animation<>(ConstantsPlayer.DURACION_MUERTE / 42f, AnimationLoader.load(dead, 7, 6)));
     }
 
     public void update(float delta){
@@ -85,7 +85,7 @@ public class Player{
     private void handleCooldown(float delta){
         if (sprintCooldown) {
             cooldownTimer += delta;
-            if (cooldownTimer >= Constants.COOLDOWN_SPRINT) {
+            if (cooldownTimer >= ConstantsPlayer.COOLDOWN_SPRINT) {
                 sprintCooldown = false;
                 cooldownTimer = 0;
             }
@@ -124,13 +124,13 @@ public class Player{
         if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && !sprintCooldown && state != PlayerState.ATTACK){
             if (state != PlayerState.SPRINT){
                 state = PlayerState.SPRINT;
-                velocidad = Constants.VELOCIDAD_SPRINT;
+                velocidad = ConstantsPlayer.VELOCIDAD_SPRINT;
                 sprintTimer = 0;
                 sprintCooldown = true;
                 tiempo = 0;
 
                 if (!moving){
-                    sprintImpulseRemaining = Constants.SPRINT_IMPULSE;
+                    sprintImpulseRemaining = ConstantsPlayer.SPRINT_IMPULSE;
                     if (lastDirX == 0 && lastDirY == 0){
                         lastDirX = 1;
                         lastDirY = 0;
@@ -141,7 +141,7 @@ public class Player{
         }
 
         if (sprintImpulseRemaining > 0){
-            float step = Constants.VELOCIDAD_SPRINT * delta;
+            float step = ConstantsPlayer.VELOCIDAD_SPRINT * delta;
             if (step > sprintImpulseRemaining) step = sprintImpulseRemaining;
 
             newX += facingRight ? step : -step;
@@ -151,7 +151,7 @@ public class Player{
 
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)){
             if (state != PlayerState.ATTACK && state != PlayerState.SPRINT) {
-                velocidad = Constants.VELOCIDAD;
+                velocidad = ConstantsPlayer.VELOCIDAD;
                 sprintImpulseRemaining = 0;
 
                 state = PlayerState.ATTACK;
@@ -167,8 +167,8 @@ public class Player{
 
         if (state == PlayerState.SPRINT){
             sprintTimer += delta;
-            if (sprintTimer >= Constants.DURACION_SPRINT && sprintImpulseRemaining <= 0) {
-                velocidad = Constants.VELOCIDAD;
+            if (sprintTimer >= ConstantsPlayer.DURACION_SPRINT && sprintImpulseRemaining <= 0) {
+                velocidad = ConstantsPlayer.VELOCIDAD;
                 state = PlayerState.IDLE;
             }
             return;
@@ -176,7 +176,7 @@ public class Player{
 
         if (state == PlayerState.ATTACK){
             attackTimer += delta;
-            if (attackTimer >= Constants.DURACION_ATAQUE){
+            if (attackTimer >= ConstantsPlayer.DURACION_ATAQUE){
                 state = PlayerState.IDLE;
             }
             return;
@@ -222,18 +222,21 @@ public class Player{
 
     public float getSprintCooldown(){
         if (!sprintCooldown) return 0;
-        return Constants.COOLDOWN_SPRINT - cooldownTimer;
+        return ConstantsPlayer.COOLDOWN_SPRINT - cooldownTimer;
     }
 
     public boolean sprintOnCooldown(){
         return sprintCooldown;
     }
 
-    public boolean collidesWithEnemy(Enemy enemy){
+    public boolean collidesWithEnemy(Goomba goomba){
         float width = 40f;
         float height = 40f;
 
-        return enemy.collides(x, y, width, height);
+        return goomba.collides(x, y, width, height);
     }
 
+    public Vida getVida(){
+        return vida;
+    }
 }

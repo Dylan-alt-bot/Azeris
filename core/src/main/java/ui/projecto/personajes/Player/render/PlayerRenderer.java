@@ -3,7 +3,7 @@ package ui.projecto.personajes.Player.render;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import ui.projecto.personajes.Player.Player;
-import ui.projecto.personajes.Player.personaje.PlayerState;
+import ui.projecto.personajes.Player.estado.PlayerState;
 
 public class PlayerRenderer {
     private float tiempo = 0f;

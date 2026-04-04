@@ -1,6 +1,6 @@
 package ui.projecto.personajes.Player.util;
 
-public class Constants {
+public class ConstantsPlayer {
     public static final float VIRTUAL_WIDTH = 650;
     public static final float VIRTUAL_HEIGHT = 480;
 

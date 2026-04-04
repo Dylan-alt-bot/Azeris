@@ -1,4 +1,4 @@
-package ui.projecto.personajes.Player.personaje;
+package ui.projecto.personajes.Player.estado;
 
 public enum PlayerState {
     IDLE,

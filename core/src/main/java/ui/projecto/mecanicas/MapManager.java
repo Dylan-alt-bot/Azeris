@@ -4,48 +4,44 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.maps.MapGroupLayer;
 import com.badlogic.gdx.maps.MapLayer;
 import com.badlogic.gdx.maps.MapObject;
-import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
-import com.badlogic.gdx.maps.MapObjects;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 public class MapManager {
-    private TiledMap map;
-    private OrthogonalTiledMapRenderer mapRenderer;
-    private TiledMapTileLayer collisionLayer;
+    private final TiledMap map;
+    private final OrthogonalTiledMapRenderer mapRenderer;
+    private final TiledMapTileLayer collisionLayer;
 
-    private List<float[]> enemySpawns;
+    private final List<float[]> enemySpawns;
 
-    private int tileSize;
+    private final int tileSize;
 
     public MapManager(String mapPath){
         map = new TmxMapLoader().load(mapPath);
         mapRenderer = new OrthogonalTiledMapRenderer(map);
         MapGroupLayer roomGroupLayer = (MapGroupLayer) map.getLayers().get("Room");
         collisionLayer = (TiledMapTileLayer) roomGroupLayer.getLayers().get("Paredes");
+        MapLayer entityLayer = roomGroupLayer.getLayers().get("Entities");
         tileSize = collisionLayer.getTileWidth();
 
         enemySpawns = new ArrayList<>();
-        MapLayer entityLayer = map.getLayers().get("Entities");
+
         if (entityLayer != null) {
-            MapObjects objects = entityLayer.getObjects();
+            for (MapObject obj : entityLayer.getObjects()) {
+                float x = obj.getProperties().get("x", Float.class);
+                float y = obj.getProperties().get("y", Float.class);
 
-            for (MapObject obj : objects) {
-                if (obj instanceof RectangleMapObject) {
-                    RectangleMapObject rect = (RectangleMapObject) obj; // cast explícito
-                    float x = rect.getRectangle().x;
-                    float y = rect.getRectangle().y;
-                    enemySpawns.add(new float[]{x, y});
-                }
-
+                enemySpawns.add(new float[]{x, y});
+                System.out.println("Spawn añadido en: " + x + ", " + y);
             }
         }
     }
+
     public boolean isBlocked(float x, float y, float width, float height){
         int startX = (int) (x / tileSize);
         int startY = (int) (y / tileSize);
@@ -74,8 +70,8 @@ public class MapManager {
 
         if (enemySpawns.isEmpty()) return selected;
 
-        int maxEnemies = Math.min(3, enemySpawns.size());
-        int count = random.nextInt(maxEnemies) + 1;
+        int maxEnemies = Math.min(2, enemySpawns.size());
+        int count = random.nextInt(maxEnemies) + 3;
 
         List<float[]> copy = new ArrayList<>(enemySpawns);
 
@@ -84,8 +80,6 @@ public class MapManager {
             selected.add(copy.get(index));
             copy.remove(index);
         }
-
-        System.out.println("Layer Entities: " + map.getLayers().get("Entities"));
         System.out.println("Enemy spawns detectados: " + enemySpawns.size());
         return selected;
     }

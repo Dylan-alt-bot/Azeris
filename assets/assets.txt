@@ -1,5 +1,5 @@
-enemy/goomba/goomba.png
-enemy/goomba/goomba_sorprendido.png
+goomba/goomba/goomba.png
+goomba/goomba/goomba_sorprendido.png
 libgdx.png
 maps/beta/mapabase.tmx
 maps/beta/mapabase2.tmx
