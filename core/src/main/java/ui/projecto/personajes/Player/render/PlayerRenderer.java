@@ -2,6 +2,7 @@ package ui.projecto.personajes.Player.render;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import ui.projecto.personajes.Player.Player;
 import ui.projecto.personajes.Player.estado.PlayerState;
 
@@ -31,5 +32,6 @@ public class PlayerRenderer {
         } else {
             batch.draw(frame, player.x, player.y);
         }
+
     }
 }

@@ -5,17 +5,20 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import ui.projecto.mecanicas.Enemy;
 import ui.projecto.mecanicas.MapManager;
 import ui.projecto.mecanicas.Vida;
-import ui.projecto.personajes.Enemies.goomba.Goomba;
 import ui.projecto.mecanicas.AnimationLoader;
 import ui.projecto.personajes.Player.animacion.AnimationManager;
 import ui.projecto.personajes.Player.estado.PlayerState;
 import ui.projecto.personajes.Player.render.PlayerRenderer;
 import ui.projecto.personajes.Player.util.ConstantsPlayer;
 
+import java.util.List;
+
 public class Player{
     public float x, y;
+    private PlayerState previousState;
 
     private final MapManager map;
     private final Vida vida;
@@ -34,7 +37,10 @@ public class Player{
 
     private float cooldownTimer = 0f;
     private float attackTimer = 0f;
+
     private float hurtTimer = 0f;
+    private float damageCooldown = 1f;
+    private float damageCooldownTimer = 0f;
 
     private float velocidad = ConstantsPlayer.VELOCIDAD;
     private float lastDirX = 0f;
@@ -70,16 +76,29 @@ public class Player{
         animations.add(PlayerState.DEAD, new Animation<>(ConstantsPlayer.DURACION_MUERTE / 42f, AnimationLoader.load(dead, 7, 6)));
     }
 
-    public void update(float delta){
+    public void update(float delta, List<Enemy> enemies){
         tiempo += delta;
 
         if (vida.isMuerto()){
             state = PlayerState.DEAD;
+            if (Gdx.input.isKeyJustPressed(Input.Keys.R)){
+                revivir(100,100);
+            }
             return;
         }
 
+        if (damageCooldownTimer > 0f) {
+            damageCooldownTimer -= delta;
+        }
+
+        if (hurtTimer > 0f){
+            hurtTimer -= delta;
+            if (hurtTimer <= 0f && !vida.isMuerto()){
+                state = previousState != PlayerState.HURT ? previousState : PlayerState.IDLE;
+            }
+        }
         handleCooldown(delta);
-        controles(delta);
+        controles(delta, enemies);
     }
 
     private void handleCooldown(float delta){
@@ -92,7 +111,7 @@ public class Player{
         }
     }
 
-    private void controles(float delta){
+    private void controles(float delta, List<Enemy> enemies){
         float newX = x;
         float newY = y;
 
@@ -121,20 +140,22 @@ public class Player{
             lastDirY = -1;
         }
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && !sprintCooldown && state != PlayerState.ATTACK){
-            if (state != PlayerState.SPRINT){
-                state = PlayerState.SPRINT;
-                velocidad = ConstantsPlayer.VELOCIDAD_SPRINT;
-                sprintTimer = 0;
-                sprintCooldown = true;
-                tiempo = 0;
+        if (state != PlayerState.HURT){
+            if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && !sprintCooldown && state != PlayerState.ATTACK){
+                if (state != PlayerState.SPRINT){
+                    state = PlayerState.SPRINT;
+                    velocidad = ConstantsPlayer.VELOCIDAD_SPRINT;
+                    sprintTimer = 0;
+                    sprintCooldown = true;
+                    tiempo = 0;
 
-                if (!moving){
-                    sprintImpulseRemaining = ConstantsPlayer.SPRINT_IMPULSE;
-                    if (lastDirX == 0 && lastDirY == 0){
-                        lastDirX = 1;
-                        lastDirY = 0;
-                        facingRight = true;
+                    if (!moving){
+                        sprintImpulseRemaining = ConstantsPlayer.SPRINT_IMPULSE;
+                        if (lastDirX == 0 && lastDirY == 0){
+                            lastDirX = 1;
+                            lastDirY = 0;
+                            facingRight = true;
+                        }
                     }
                 }
             }
@@ -160,10 +181,8 @@ public class Player{
                 return;
             }
         }
-
-
-        if (collides(newX, y)) x = newX;
-        if (collides(x, newY)) y = newY;
+        if (collidesWithEnemiesSolid(enemies, newX, y) && collides(newX, y)) x = newX;
+        if (collidesWithEnemiesSolid(enemies, x, newY) && collides(x, newY)) y = newY;
 
         if (state == PlayerState.SPRINT){
             sprintTimer += delta;
@@ -182,7 +201,9 @@ public class Player{
             return;
         }
 
-        state = moving ? PlayerState.RUN : PlayerState.IDLE;
+        if (state != PlayerState.HURT){
+            state = moving ? PlayerState.RUN : PlayerState.IDLE;
+        }
     }
 
 
@@ -229,11 +250,79 @@ public class Player{
         return sprintCooldown;
     }
 
-    public boolean collidesWithEnemy(Goomba goomba){
-        float width = 40f;
-        float height = 40f;
+    public boolean collidesWithEnemy(Enemy enemy) {
+        if (enemy.isDead()) return false;
 
-        return goomba.collides(x, y, width, height);
+        float width = 16f;
+        float height = 16f;
+
+        return enemy.collides(x, y, width, height);
+    }
+
+    public boolean collidesWithEnemiesSolid(List<Enemy> enemies, float nextX, float nextY) {
+        float playerWidth = 36f;
+        float playerHeight = 20f;
+        float offsetX = 14f;
+        float offsetY = 10f;
+
+        float px = nextX + offsetX;
+        float py = nextY + offsetY;
+
+        for (Enemy enemy : enemies) {
+            if (!enemy.isDead()) {
+                if (enemy.collides(px, py, playerWidth, playerHeight)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public void recibirDolor(int cantidad){
+        if (damageCooldownTimer <= 0f && !vida.isMuerto()) {
+            vida.recibirDolor(cantidad);
+
+            previousState = state;
+
+            state = PlayerState.HURT;
+            tiempo = 0f;
+            hurtTimer = ConstantsPlayer.DURACION_DOLOR;
+
+            damageCooldownTimer = damageCooldown;
+        }
+    }
+
+    public boolean attackHits(Enemy enemy){
+        float range = 10f;
+        float width = 50f;
+        float height = 20f;
+
+        float attackX = x;
+        float attackY = y + 5f;
+
+        if (facingRight){
+            attackX += range;
+        } else {
+            attackX -= range;
+        }
+
+        return enemy.collides(attackX, attackY, width, height);
+    }
+
+    public void revivir(float startX, float startY){
+        vida.revivir();
+        x = startX;
+        y = startY;
+        state = PlayerState.IDLE;
+        tiempo = 0f;
+        velocidad = ConstantsPlayer.VELOCIDAD;
+        sprintImpulseRemaining = 0;
+        sprintCooldown = false;
+        cooldownTimer = 0f;
+        sprintTimer = 0f;
+        attackTimer = 0f;
+        hurtTimer = 0f;
+        damageCooldownTimer = 0f;
     }
 
     public Vida getVida(){

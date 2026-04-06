@@ -9,10 +9,12 @@ import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import ui.projecto.mecanicas.Enemy;
 import ui.projecto.mecanicas.MapManager;
 import ui.projecto.personajes.Enemies.goomba.Goomba;
 import ui.projecto.personajes.Player.Player;
 import ui.projecto.personajes.Player.PlayerUI;
+import ui.projecto.personajes.Player.estado.PlayerState;
 import ui.projecto.personajes.Player.util.ConstantsPlayer;
 
 import java.util.*;
@@ -29,7 +31,7 @@ public class Main extends ApplicationAdapter {
     private BitmapFont font;
 
     private PlayerUI playerUI;
-    private List<Goomba> enemies;
+    private List<Enemy> enemies;
 
     private boolean fullscreen = false;
 
@@ -61,16 +63,13 @@ public class Main extends ApplicationAdapter {
         this.glProfiler.enable();
     }
 
-
     @Override
     public void render() {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) {
-            toggleFullscreen();
-        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) toggleFullscreen();
 
         float deltaTime = Gdx.graphics.getDeltaTime();
 
-        jugadorPrincipal.update(deltaTime);
+        jugadorPrincipal.update(deltaTime, enemies);
 
         camera.position.set(
             jugadorPrincipal.x,
@@ -92,9 +91,18 @@ public class Main extends ApplicationAdapter {
 
         jugadorPrincipal.render(batch, deltaTime);
 
-        for (Goomba goomba : enemies) {
-            goomba.update(deltaTime);
-            goomba.render(batch);
+        for (Enemy enemy : enemies) {
+            enemy.update(deltaTime, jugadorPrincipal);
+            enemy.render(batch);
+
+            if (!enemy.isDead() && jugadorPrincipal.getState() == PlayerState.ATTACK && jugadorPrincipal.attackHits(enemy)) {
+                enemy.recibirDolor(10, jugadorPrincipal.x, jugadorPrincipal.y);
+            }
+
+            if (!enemy.isDead() && jugadorPrincipal.collidesWithEnemy(enemy)) {
+                int damage = Math.round(jugadorPrincipal.getVida().getVidaMaxima() * 0.05f);
+                jugadorPrincipal.recibirDolor(damage);
+            }
         }
 
         batch.end();
@@ -105,7 +113,16 @@ public class Main extends ApplicationAdapter {
         if (jugadorPrincipal.sprintOnCooldown()) {
             float remaining = jugadorPrincipal.getSprintCooldown();
             String text = String.format("Sprint: %.1f s", remaining);
-            font.draw(batch, text, 20, 420);
+            font.draw(batch, text, 20, 430);
+        }
+
+        if (jugadorPrincipal.getVida().isMuerto()) {
+            String mensaje = "¡Has muerto! Presiona R para revivir";
+
+            GlyphLayout layout = new GlyphLayout(font, mensaje);
+            float x = (ConstantsPlayer.VIRTUAL_WIDTH - layout.width) / 2;
+            float y = (ConstantsPlayer.VIRTUAL_HEIGHT - layout.height) / 2 + 50;
+            font.draw(batch, layout, x, y);
         }
 
         batch.end();

@@ -1,7 +1,6 @@
 package ui.projecto.personajes.Player;
 
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public class PlayerUI {
@@ -18,11 +17,11 @@ public class PlayerUI {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
         float x = 20;
-        float y = 430;
+        float y = 440;
         float width = 200;
         float height = 20;
 
-        shapeRenderer.setColor(Color.DARK_GRAY);
+        shapeRenderer.setColor(Color.RED);
         shapeRenderer.rect(x, y, width, height);
 
         float vidaPct = player.getVida().getPorcentajeVida();

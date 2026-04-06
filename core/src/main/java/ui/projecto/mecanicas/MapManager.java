@@ -83,4 +83,8 @@ public class MapManager {
         System.out.println("Enemy spawns detectados: " + enemySpawns.size());
         return selected;
     }
+
+    public int getTileSize() {
+        return tileSize;
+    }
 }

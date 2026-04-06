@@ -3,7 +3,6 @@ package ui.projecto.personajes.Enemies.goomba.animacion;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import ui.projecto.personajes.Enemies.goomba.estado.GoombaState;
-import ui.projecto.personajes.Player.estado.PlayerState;
 
 import java.util.HashMap;
 
