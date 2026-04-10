@@ -70,8 +70,7 @@ public class MapManager {
 
         if (enemySpawns.isEmpty()) return selected;
 
-        int maxEnemies = Math.min(2, enemySpawns.size());
-        int count = random.nextInt(maxEnemies) + 3;
+        int count = random.nextInt(enemySpawns.size() - 3) + 3;
 
         List<float[]> copy = new ArrayList<>(enemySpawns);
 

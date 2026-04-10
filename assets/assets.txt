@@ -1,8 +1,10 @@
-goomba/goomba/goomba.png
-goomba/goomba/goomba_sorprendido.png
+enemy/goomba/goomba.png
+enemy/goomba/goomba_corriendo.png
+enemy/goomba/goomba_dolor.png
+enemy/goomba/goomba_muerte.png
+enemy/goomba/goomba_sorprendido.png
 libgdx.png
 maps/beta/mapabase.tmx
-maps/beta/mapabase2.tmx
 maps/beta/textures/Objects.png
 maps/beta/textures/decorative_cracks_floor.png
 maps/beta/textures/decorative_cracks_walls.png

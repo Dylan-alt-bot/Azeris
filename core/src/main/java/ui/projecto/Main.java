@@ -89,8 +89,6 @@ public class Main extends ApplicationAdapter {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        jugadorPrincipal.render(batch, deltaTime);
-
         for (Enemy enemy : enemies) {
             enemy.update(deltaTime, jugadorPrincipal);
             enemy.render(batch);
@@ -104,6 +102,8 @@ public class Main extends ApplicationAdapter {
                 jugadorPrincipal.recibirDolor(damage);
             }
         }
+
+        jugadorPrincipal.render(batch, deltaTime);
 
         batch.end();
 

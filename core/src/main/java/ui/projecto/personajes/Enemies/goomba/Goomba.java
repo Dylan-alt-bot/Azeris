@@ -39,7 +39,7 @@ public class Goomba implements Enemy{
 
         wander = new EnemyWander(ConstantsGoomba.VELOCIDAD, 10f, 100f, map, 20f, 20f);
         pathFinder = new EnemyPathFinder(map, map.getTileSize());
-        vision = new EnemyVision(100f);
+        vision = new EnemyVision(150f);
         loadAnimation();
     }
 
@@ -90,15 +90,44 @@ public class Goomba implements Enemy{
                 }
             } else if (state == GoombaState.RUN) {
                 Vector2 nextStep = pathFinder.findNextStep(posX, posY, player.x, player.y);
-                if (nextStep != null) {
-                    float dx = nextStep.x - posX;
-                    float dy = nextStep.y - posY;
-                    float dist = (float) Math.sqrt(dx * dx + dy * dy);
-                    if (dist > 0.1f) {
-                        float moveX = dx / dist * 50f * delta;
-                        float moveY = dy / dist * 50f * delta;
+
+                float dx = player.x - posX;
+                float dy = player.y - posY;
+                float distToPlayer = (float)Math.sqrt(dx * dx + dy * dy);
+
+                if (distToPlayer < 20f) {
+                    if (distToPlayer > 0) {
+                        float moveX = dx / distToPlayer * 60f * delta;
+                        float moveY = dy / distToPlayer * 60f * delta;
                         if (!map.isBlocked(posX + moveX, posY, width, height)) posX += moveX;
                         if (!map.isBlocked(posX, posY + moveY, width, height)) posY += moveY;
+                    }
+                    return;
+                }
+                if (nextStep != null) {
+                    float ndx = nextStep.x - posX;
+                    float ndy = nextStep.y - posY;
+                    float dist = (float)Math.sqrt(ndx * ndx + ndy * ndy);
+
+                    if (dist > 1f) {
+                        float moveX = ndx / dist * 50f * delta;
+                        float moveY = ndy / dist * 50f * delta;
+
+                        boolean moved = false;
+                        if (!map.isBlocked(posX + moveX, posY, width, height)) {
+                            posX += moveX;
+                            moved = true;
+                        }
+                        if (!map.isBlocked(posX, posY + moveY, width, height)) {
+                            posY += moveY;
+                            moved = true;
+                        }
+                        if (!moved && distToPlayer > 0) {
+                            float tryX = dx / distToPlayer * 40f * delta;
+                            float tryY = dy / distToPlayer * 40f * delta;
+                            if (!map.isBlocked(posX + tryX, posY, width, height)) posX += tryX;
+                            if (!map.isBlocked(posX, posY + tryY, width, height)) posY += tryY;
+                        }
                     }
                 }
             }

@@ -229,9 +229,9 @@ public class Player{
     }
 
     private boolean collides(float newX, float newY){
-        float hitboxWidth = 36f;
+        float hitboxWidth = 30f;
         float hitboxHeight = 10f;
-        float offsetX = 14f;
+        float offsetX = 10f;
         float offsetY = 10f;
         return !map.isBlocked(
             newX + offsetX,
@@ -294,7 +294,7 @@ public class Player{
 
     public boolean attackHits(Enemy enemy){
         float range = 10f;
-        float width = 50f;
+        float width = 60f;
         float height = 20f;
 
         float attackX = x;
