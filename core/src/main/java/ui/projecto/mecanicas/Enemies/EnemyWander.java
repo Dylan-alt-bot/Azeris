@@ -1,4 +1,6 @@
-package ui.projecto.mecanicas;
+package ui.projecto.mecanicas.Enemies;
+
+import ui.projecto.mecanicas.MapManager;
 
 import java.util.Random;
 
@@ -15,8 +17,8 @@ public class EnemyWander {
 
     private final Random random = new Random();
 
-    private MapManager mapManager;
-    private float entityWidth, entityHeight;
+    private final MapManager mapManager;
+    private final float entityWidth, entityHeight;
 
     public EnemyWander(float speed, float maxWaitTime, float wanderRadius, MapManager mapManager, float width, float height) {
         this.speed = speed;
@@ -36,7 +38,6 @@ public class EnemyWander {
                 generateNewTarget(x,y);
                 hasTarget = true;
             }
-            return;
         }
     }
 

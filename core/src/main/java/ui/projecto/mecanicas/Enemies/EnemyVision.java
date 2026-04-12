@@ -1,4 +1,4 @@
-package ui.projecto.mecanicas;
+package ui.projecto.mecanicas.Enemies;
 
 public class EnemyVision {
     private final float detectionRadius;

@@ -7,7 +7,11 @@ import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.maps.tiled.objects.TiledMapTileMapObject;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.math.Vector2;
+import ui.projecto.mecanicas.Enemies.EnemySpawn;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -17,7 +21,9 @@ public class MapManager {
     private final OrthogonalTiledMapRenderer mapRenderer;
     private final TiledMapTileLayer collisionLayer;
 
-    private final List<float[]> enemySpawns;
+    private final List<Vector2> playerSpawns;
+    private final List<EnemySpawn> enemySpawns;
+    private final List<Vector2> hearthSpawns;
 
     private final int tileSize;
 
@@ -29,15 +35,42 @@ public class MapManager {
         MapLayer entityLayer = roomGroupLayer.getLayers().get("Entities");
         tileSize = collisionLayer.getTileWidth();
 
-        enemySpawns = new ArrayList<>();
+        playerSpawns = new ArrayList<>();
+        MapLayer playerLayer = roomGroupLayer.getLayers().get("Player");
+        if (playerLayer != null){
+            for (MapObject obj : playerLayer.getObjects()) {
+                float x = obj.getProperties().get("x", float.class);
+                float y = obj.getProperties().get("y", float.class);
 
+                playerSpawns.add(new Vector2(x,y));
+            }
+        }
+
+        enemySpawns = new ArrayList<>();
         if (entityLayer != null) {
             for (MapObject obj : entityLayer.getObjects()) {
                 float x = obj.getProperties().get("x", Float.class);
                 float y = obj.getProperties().get("y", Float.class);
+                String type = null;
+                if (obj instanceof TiledMapTileMapObject) {
+                    TiledMapTileMapObject tileObj = (TiledMapTileMapObject) obj;
+                    type = tileObj.getTile().getProperties().get("type", String.class);
+                }
+                if (type == null){
+                    System.out.println("Entidad sin tipo en: " + x + ", " + y);
+                    continue;
+                }
+                enemySpawns.add(new EnemySpawn(x, y, type));
+            }
+        }
+        hearthSpawns = new ArrayList<>();
+        MapLayer hearthLayer = roomGroupLayer.getLayers().get("Heart");
+        if (hearthLayer != null){
+            for (MapObject obj : hearthLayer.getObjects()) {
+                float x = obj.getProperties().get("x", Float.class);
+                float y = obj.getProperties().get("y", Float.class);
 
-                enemySpawns.add(new float[]{x, y});
-                System.out.println("Spawn añadido en: " + x + ", " + y);
+                hearthSpawns.add(new Vector2(x,y));
             }
         }
     }
@@ -64,22 +97,40 @@ public class MapManager {
         mapRenderer.render();
     }
 
-    public List<float[]> getRandomEnemySpawns() {
-        List<float[]> selected = new ArrayList<>();
+    public Vector2 getRandomPlayerSpawn() {
+        if (playerSpawns.isEmpty()) return new Vector2(0,0);
+
         Random random = new Random();
+        return playerSpawns.get(random.nextInt(playerSpawns.size()));
+    }
 
+    public List<EnemySpawn> getRandomEnemySpawns() {
+        List<EnemySpawn> selected = new ArrayList<>();
+        Random random = new Random();
         if (enemySpawns.isEmpty()) return selected;
-
         int count = random.nextInt(enemySpawns.size() - 3) + 3;
-
-        List<float[]> copy = new ArrayList<>(enemySpawns);
-
+        List<EnemySpawn> copy = new ArrayList<>(enemySpawns);
         for (int i = 0; i < count; i++) {
             int index = random.nextInt(copy.size());
             selected.add(copy.get(index));
             copy.remove(index);
         }
-        System.out.println("Enemy spawns detectados: " + enemySpawns.size());
+        System.out.println("Enemigos spawneados: " + count);
+        return selected;
+    }
+
+    public List<Vector2> getHearthSpawns() {
+        if (hearthSpawns.isEmpty()) return new ArrayList<>();
+        Random random = new Random();
+        int count = random.nextInt(hearthSpawns.size() - 1) + 1;
+        List<Vector2> copy = new ArrayList<>(hearthSpawns);
+        List<Vector2> selected = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            int index = random.nextInt(copy.size());
+            selected.add(copy.get(index));
+            copy.remove(index);
+        }
+        System.out.println("Corazones spawneados: " + count);
         return selected;
     }
 

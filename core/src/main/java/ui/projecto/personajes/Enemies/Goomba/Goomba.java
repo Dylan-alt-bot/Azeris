@@ -1,4 +1,4 @@
-package ui.projecto.personajes.Enemies.goomba;
+package ui.projecto.personajes.Enemies.Goomba;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
@@ -6,40 +6,45 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import ui.projecto.mecanicas.*;
-import ui.projecto.personajes.Enemies.goomba.util.ConstantsGoomba;
+import ui.projecto.mecanicas.Enemies.Enemy;
+import ui.projecto.mecanicas.Enemies.EnemyPathFinder;
+import ui.projecto.mecanicas.Enemies.EnemyVision;
+import ui.projecto.mecanicas.Enemies.EnemyWander;
+import ui.projecto.personajes.Enemies.Goomba.util.ConstantsGoomba;
 import ui.projecto.personajes.Player.Player;
-import ui.projecto.personajes.Enemies.goomba.animacion.AnimationMangerGoomba;
-import ui.projecto.personajes.Enemies.goomba.estado.GoombaState;
+import ui.projecto.personajes.Enemies.Goomba.animacion.AnimationManagerGoomba;
+import ui.projecto.personajes.Enemies.Goomba.estado.GoombaState;
 
-public class Goomba implements Enemy{
-    private float posX, posY, tiempo = 0f;
+public class Goomba implements Enemy {
+    private float x, y, tiempo = 0f;
     private final float width = 16f, height = 16f;
+    private final float velocidad = ConstantsGoomba.VELOCIDAD;
 
     private final Vida vida = new Vida(30);
     private GoombaState state = GoombaState.IDLE, previousState = GoombaState.IDLE;
-    private final AnimationMangerGoomba animations = new AnimationMangerGoomba();
+    private final AnimationManagerGoomba animations = new AnimationManagerGoomba();
     private final MapManager map;
 
     private final EnemyVision vision;
     private final EnemyWander wander;
     private final EnemyPathFinder pathFinder;
 
-    private float alertTimer = 0f;
-    private boolean alertStarted = false;
+    private float alertTimer = ConstantsGoomba.ALERT_TIMER;
+    private boolean alertStarted = ConstantsGoomba.ALERT_STARTED;
 
-    private float hurtTimer = 0f;
-    private float damageTimer = 0f;
+    private float hurtTimer = ConstantsGoomba.HURT_TIMER;
+    private float damageTimer = ConstantsGoomba.DAMAGE_TIMER;
 
     private float knockbackX = 0f, knockbackY = 0f, knockbackTimer = 0f;
 
     public Goomba(float x, float y, MapManager map) {
-        this.posX = x;
-        this.posY = y;
+        this.x = x;
+        this.y = y;
         this.map = map;
 
-        wander = new EnemyWander(ConstantsGoomba.VELOCIDAD, 10f, 100f, map, 20f, 20f);
+        wander = new EnemyWander(velocidad, 1f, ConstantsGoomba.DETECTED_PLAYER, map, width, height);
         pathFinder = new EnemyPathFinder(map, map.getTileSize());
-        vision = new EnemyVision(150f);
+        vision = new EnemyVision(ConstantsGoomba.DETECTED_PLAYER);
         loadAnimation();
     }
 
@@ -53,7 +58,7 @@ public class Goomba implements Enemy{
         animations.add(GoombaState.IDLE, new Animation<>(0.08f, AnimationLoader.load(idle, 6,6)));
         animations.add(GoombaState.RUN, new Animation<>(0.4f, AnimationLoader.load(run, 2, 1)));
         animations.add(GoombaState.ALERT, new Animation<>(0.04f, AnimationLoader.load(alert, 1, 1)));
-        animations.add(GoombaState.HURT, new Animation<>(0.04f, AnimationLoader.load(hurt, 3, 3)));
+        animations.add(GoombaState.HURT, new Animation<>(0.1f, AnimationLoader.load(hurt, 3, 3)));
         animations.add(GoombaState.DEAD, new Animation<>(0.04f, AnimationLoader.load(dead, 2, 2)));
     }
 
@@ -73,10 +78,11 @@ public class Goomba implements Enemy{
         if (state == GoombaState.HURT){
             hurtTimer -= delta;
             if (hurtTimer <= 0){
-                state = previousState != GoombaState.HURT ? previousState : GoombaState.IDLE;
+                state = GoombaState.RUN;
+                alertStarted = true;
             }
         }
-        if (vision.isPlayerInRange(posX,posY, player.x, player.y)) {
+        if (vision.isPlayerInRange(x, y, player.x, player.y)) {
             if (!alertStarted){
                 state = GoombaState.ALERT;
                 alertTimer = 0f;
@@ -89,44 +95,44 @@ public class Goomba implements Enemy{
                     state = GoombaState.RUN;
                 }
             } else if (state == GoombaState.RUN) {
-                Vector2 nextStep = pathFinder.findNextStep(posX, posY, player.x, player.y);
+                Vector2 nextStep = pathFinder.findNextStep(x, y, player.x, player.y);
 
-                float dx = player.x - posX;
-                float dy = player.y - posY;
+                float dx = player.x - x;
+                float dy = player.y - y;
                 float distToPlayer = (float)Math.sqrt(dx * dx + dy * dy);
 
                 if (distToPlayer < 20f) {
                     if (distToPlayer > 0) {
-                        float moveX = dx / distToPlayer * 60f * delta;
-                        float moveY = dy / distToPlayer * 60f * delta;
-                        if (!map.isBlocked(posX + moveX, posY, width, height)) posX += moveX;
-                        if (!map.isBlocked(posX, posY + moveY, width, height)) posY += moveY;
+                        float moveX = dx / distToPlayer * velocidad * delta;
+                        float moveY = dy / distToPlayer * velocidad * delta;
+                        if (!map.isBlocked(x + moveX, y, width, height)) x += moveX;
+                        if (!map.isBlocked(x, y + moveY, width, height)) y += moveY;
                     }
                     return;
                 }
                 if (nextStep != null) {
-                    float ndx = nextStep.x - posX;
-                    float ndy = nextStep.y - posY;
+                    float ndx = nextStep.x - x;
+                    float ndy = nextStep.y - y;
                     float dist = (float)Math.sqrt(ndx * ndx + ndy * ndy);
 
                     if (dist > 1f) {
-                        float moveX = ndx / dist * 50f * delta;
-                        float moveY = ndy / dist * 50f * delta;
+                        float moveX = ndx / dist * velocidad * delta;
+                        float moveY = ndy / dist * velocidad * delta;
 
                         boolean moved = false;
-                        if (!map.isBlocked(posX + moveX, posY, width, height)) {
-                            posX += moveX;
+                        if (!map.isBlocked(x + moveX, y, width, height)) {
+                            x += moveX;
                             moved = true;
                         }
-                        if (!map.isBlocked(posX, posY + moveY, width, height)) {
-                            posY += moveY;
+                        if (!map.isBlocked(x, y + moveY, width, height)) {
+                            y += moveY;
                             moved = true;
                         }
                         if (!moved && distToPlayer > 0) {
-                            float tryX = dx / distToPlayer * 40f * delta;
-                            float tryY = dy / distToPlayer * 40f * delta;
-                            if (!map.isBlocked(posX + tryX, posY, width, height)) posX += tryX;
-                            if (!map.isBlocked(posX, posY + tryY, width, height)) posY += tryY;
+                            float tryX = dx / distToPlayer * velocidad * delta;
+                            float tryY = dy / distToPlayer * velocidad * delta;
+                            if (!map.isBlocked(x + tryX, y, width, height)) x += tryX;
+                            if (!map.isBlocked(x, y + tryY, width, height)) y += tryY;
                         }
                     }
                 }
@@ -134,12 +140,12 @@ public class Goomba implements Enemy{
         } else {
             alertTimer = 0f;
             alertStarted = false;
-            wander.update(delta, posX, posY);
+            wander.update(delta, x, y);
             if (wander.hasTarget()) {
                 state = GoombaState.RUN;
-                posX = wander.moveX(posX, posY, delta);
-                posY = wander.moveY(posX, posY, delta);
-                if (wander.reachedTarget(posX, posY)) {
+                x = wander.moveX(x, y, delta);
+                y = wander.moveY(x, y, delta);
+                if (wander.reachedTarget(x, y)) {
                     wander.stop();
                     state = GoombaState.IDLE;
                 }
@@ -154,9 +160,12 @@ public class Goomba implements Enemy{
             float moveX = knockbackX * delta;
             float moveY = knockbackY * delta;
 
-            if (!map.isBlocked(posX + moveX, posY, width, height)) posX += moveX;
-            if (!map.isBlocked(posX, posY + moveY, width, height)) posY += moveY;
+            if (!map.isBlocked(x + moveX, y, width, height)) x += moveX;
+            if (!map.isBlocked(x, y + moveY, width, height)) y += moveY;
 
+            if (knockbackTimer <= 0f && state == GoombaState.HURT) {
+                state = GoombaState.RUN;
+            }
             return;
         }
 
@@ -166,6 +175,7 @@ public class Goomba implements Enemy{
         }
     }
 
+    @Override
     public void render(SpriteBatch batch) {
         Animation<TextureRegion> anim = animations.get(state);
         if (anim != null){
@@ -175,23 +185,25 @@ public class Goomba implements Enemy{
             } else {
                 currentFrame = anim.getKeyFrame(tiempo, false);
             }
-            batch.draw(currentFrame, posX, posY, width, height);
+            batch.draw(currentFrame, x, y, width, height);
         }
     }
 
+    @Override
     public void recibirDolor(int cantidad, float sourceX, float sourceY){
         if (damageTimer > 0f) return;
 
         vida.recibirDolor(cantidad);
         damageTimer = ConstantsGoomba.DAMAGE_COOLDOWN;
 
-        float dx = posX - sourceX;
-        float dy = posY - sourceY;
+        float dx = x - sourceX;
+        float dy = y - sourceY;
         float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
         if (dist != 0){
-            knockbackX = (dx / dist) * ConstantsGoomba.KNOCKBACK_FORCE;
-            knockbackY = (dy / dist) * ConstantsGoomba.KNOCKBACK_FORCE;
+            float knockback_force = ConstantsGoomba.KNOCKBACK_FORCE;
+            knockbackX = (dx / dist) * knockback_force;
+            knockbackY = (dy / dist) * knockback_force;
         }
 
         knockbackTimer = ConstantsGoomba.KNOCKBACK_DURATION;
@@ -203,7 +215,7 @@ public class Goomba implements Enemy{
         }
         previousState = state;
         state = GoombaState.HURT;
-        hurtTimer = ConstantsGoomba.DURACION_DOLOR;
+        hurtTimer = ConstantsGoomba.DURACION_HURT;
     }
 
     public boolean isDead(){
@@ -211,10 +223,10 @@ public class Goomba implements Enemy{
     }
 
     @Override
-    public float getX() {return posX;}
+    public float getX() {return x;}
 
     @Override
-    public float getY() {return posY;}
+    public float getY() {return y;}
 
     @Override
     public float getWidth() {return width;}
@@ -224,6 +236,6 @@ public class Goomba implements Enemy{
 
     @Override
     public boolean collides(float px, float py, float pw, float ph) {
-        return !(px + pw < posX || px > posX + width || py + ph < posY || py > posY + height);
+        return !(px + pw < x || px > x + width || py + ph < y || py > y + height);
     }
 }

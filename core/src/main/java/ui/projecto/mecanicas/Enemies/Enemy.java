@@ -1,4 +1,4 @@
-package ui.projecto.mecanicas;
+package ui.projecto.mecanicas.Enemies;
 
 import ui.projecto.personajes.Player.Player;
 

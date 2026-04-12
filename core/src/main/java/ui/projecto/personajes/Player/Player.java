@@ -5,7 +5,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import ui.projecto.mecanicas.Enemy;
+import ui.projecto.mecanicas.Enemies.Enemy;
 import ui.projecto.mecanicas.MapManager;
 import ui.projecto.mecanicas.Vida;
 import ui.projecto.mecanicas.AnimationLoader;
@@ -18,7 +18,9 @@ import java.util.List;
 
 public class Player{
     public float x, y;
+    private final float spawnX, spawnY;
     private PlayerState previousState;
+    public boolean attackHitRegistered = false;
 
     private final MapManager map;
     private final Vida vida;
@@ -46,10 +48,14 @@ public class Player{
     private float lastDirX = 0f;
     private float lastDirY = 0f;
 
+    private float knockbackX = 0f, knockbackY = 0f, knockbackTimer = 0f;
+
 
     public Player(float x, float y, MapManager map) {
         this.x = x;
         this.y = y;
+        this.spawnX = x;
+        this.spawnY = y;
         this.map = map;
 
         this.vida = new Vida(100);
@@ -62,7 +68,7 @@ public class Player{
 
     private void loadAnimations(){
         Texture idle = new Texture("player/player.png");
-        Texture run = new Texture("player/Player_corriendo.png");
+        Texture run = new Texture("player/player_corriendo.png");
         Texture attack = new Texture("player/player_atacar.png");
         Texture sprint = new Texture("player/player_sprint.png");
         Texture hurt = new Texture("player/player_dolor.png");
@@ -79,10 +85,19 @@ public class Player{
     public void update(float delta, List<Enemy> enemies){
         tiempo += delta;
 
+        if (knockbackTimer > 0f && state != PlayerState.DEAD){
+            float newX = x + knockbackX * delta;
+            float newY = y + knockbackY * delta;
+            if (collides(newX, y)) x = newX;
+            if (collides(x, newY)) y = newY;
+            knockbackTimer -= delta;
+        }
+
         if (vida.isMuerto()){
             state = PlayerState.DEAD;
+            knockbackTimer = 0f;
             if (Gdx.input.isKeyJustPressed(Input.Keys.R)){
-                revivir(100,100);
+                revivir();
             }
             return;
         }
@@ -93,7 +108,7 @@ public class Player{
 
         if (hurtTimer > 0f){
             hurtTimer -= delta;
-            if (hurtTimer <= 0f && !vida.isMuerto()){
+            if (hurtTimer <= 0f && knockbackTimer <= 0f && !vida.isMuerto()){
                 state = previousState != PlayerState.HURT ? previousState : PlayerState.IDLE;
             }
         }
@@ -178,6 +193,8 @@ public class Player{
                 state = PlayerState.ATTACK;
                 attackTimer = 0;
                 tiempo = 0;
+
+                attackHitRegistered = false;
                 return;
             }
         }
@@ -278,7 +295,7 @@ public class Player{
         return true;
     }
 
-    public void recibirDolor(int cantidad){
+    public void recibirDolor(int cantidad, float enemyX, float enemyY){
         if (damageCooldownTimer <= 0f && !vida.isMuerto()) {
             vida.recibirDolor(cantidad);
 
@@ -289,16 +306,30 @@ public class Player{
             hurtTimer = ConstantsPlayer.DURACION_DOLOR;
 
             damageCooldownTimer = damageCooldown;
+
+            float dirX = x - enemyX;
+            float dirY = y - enemyY;
+
+            float length = (float) Math.sqrt(dirX * dirX + dirY * dirY);
+            if (length != 0) {
+                dirX /= length;
+                dirY /= length;
+            }
+
+            float force = ConstantsPlayer.KNOCKBACK_FORCE;
+            knockbackX = dirX * force;
+            knockbackY = dirY * force;
+            knockbackTimer = ConstantsPlayer.KNOCKBACK_DURATION;
         }
     }
 
     public boolean attackHits(Enemy enemy){
-        float range = 10f;
-        float width = 60f;
-        float height = 20f;
+        float range = 5f;
+        float width = 50f;
+        float height = 30f;
 
         float attackX = x;
-        float attackY = y + 5f;
+        float attackY = y;
 
         if (facingRight){
             attackX += range;
@@ -309,10 +340,10 @@ public class Player{
         return enemy.collides(attackX, attackY, width, height);
     }
 
-    public void revivir(float startX, float startY){
+    public void revivir(){
         vida.revivir();
-        x = startX;
-        y = startY;
+        x = spawnX;
+        y = spawnY;
         state = PlayerState.IDLE;
         tiempo = 0f;
         velocidad = ConstantsPlayer.VELOCIDAD;
@@ -327,5 +358,13 @@ public class Player{
 
     public Vida getVida(){
         return vida;
+    }
+
+    public boolean isAttackHitRegistered(){
+        return attackHitRegistered;
+    }
+
+    public void setAttackHitRegistered(boolean value){
+        attackHitRegistered = value;
     }
 }

@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="50" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="7" nextobjectid="13">
- <tileset firstgid="1" source="tilesets/Paredes2.tsx"/>
- <tileset firstgid="494" source="tilesets/Paredes.tsx"/>
- <tileset firstgid="750" source="tilesets/Objetos.tsx"/>
- <tileset firstgid="966" source="tilesets/goomba.tsx"/>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="50" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="11" nextobjectid="38">
+ <tileset firstgid="1" source="../tilesets/Paredes2.tsx"/>
+ <tileset firstgid="494" source="../tilesets/Paredes.tsx"/>
+ <tileset firstgid="750" source="../tilesets/Objetos.tsx"/>
+ <tileset firstgid="966" source="../tilesets/skeleton.tsx"/>
+ <tileset firstgid="968" source="../tilesets/goomba.tsx"/>
+ <tileset firstgid="969" source="../tilesets/player.tsx"/>
+ <tileset firstgid="970" source="../tilesets/corazon.tsx"/>
  <group id="6" name="Room">
   <layer id="1" name="Fondo" width="50" height="40">
    <data encoding="csv">
@@ -138,13 +141,22 @@
 </data>
   </layer>
   <objectgroup id="5" name="Entities">
-   <object id="6" gid="966" x="128" y="176" width="20" height="20"/>
-   <object id="7" gid="966" x="368" y="128" width="20" height="20"/>
-   <object id="8" gid="966" x="176" y="432" width="20" height="20"/>
-   <object id="9" gid="966" x="368" y="496" width="20" height="20"/>
-   <object id="10" gid="966" x="688" y="288" width="20" height="20"/>
-   <object id="11" gid="966" x="608" y="112" width="20" height="20"/>
-   <object id="12" gid="966" x="624" y="432" width="20" height="20"/>
+   <object id="13" gid="966" x="262" y="87" width="32" height="32"/>
+   <object id="14" gid="966" x="77" y="468" width="32" height="32"/>
+   <object id="15" gid="966" x="596" y="569" width="32" height="32"/>
+   <object id="16" gid="967" x="652" y="223" width="32" height="32"/>
+   <object id="17" gid="967" x="264" y="461" width="32" height="32"/>
+   <object id="18" gid="967" x="418" y="217" width="32" height="32"/>
+   <object id="19" gid="967" x="65" y="137" width="32" height="32"/>
+   <object id="20" gid="967" x="151" y="592" width="32" height="32"/>
+   <object id="21" gid="968" x="155" y="172" width="16" height="16"/>
+   <object id="22" gid="968" x="136" y="370" width="16" height="16"/>
+   <object id="23" gid="968" x="222" y="523" width="16" height="16"/>
+   <object id="24" gid="968" x="416" y="500" width="16" height="16"/>
+   <object id="25" gid="968" x="624" y="483" width="16" height="16"/>
+   <object id="26" gid="968" x="493" y="341" width="16" height="16"/>
+   <object id="27" gid="968" x="591" y="155" width="16" height="16"/>
+   <object id="28" gid="968" x="336" y="144" width="16" height="16"/>
   </objectgroup>
   <objectgroup id="4" name="Objects">
    <object id="1" gid="783" x="656" y="80" width="16" height="16"/>
@@ -152,6 +164,19 @@
    <object id="3" gid="807" x="656" y="96" width="16" height="16"/>
    <object id="4" gid="808" x="672" y="96" width="16" height="16"/>
    <object id="5" gid="927" x="432" y="576" width="16" height="16"/>
+  </objectgroup>
+  <objectgroup id="10" name="Heart">
+   <object id="32" gid="970" x="238" y="188" width="18" height="18"/>
+   <object id="33" gid="970" x="151" y="487" width="18" height="18"/>
+   <object id="34" gid="970" x="345" y="455" width="18" height="18"/>
+   <object id="35" gid="970" x="585" y="267" width="18" height="18"/>
+   <object id="36" gid="970" x="552" y="492" width="18" height="18"/>
+   <object id="37" gid="970" x="395" y="340" width="18" height="18"/>
+  </objectgroup>
+  <objectgroup id="7" name="Player">
+   <object id="29" gid="969" x="345.333" y="596" width="64" height="64"/>
+   <object id="30" gid="969" x="124" y="118.667" width="64" height="64"/>
+   <object id="31" gid="969" x="631" y="364" width="64" height="64"/>
   </objectgroup>
  </group>
 </map>

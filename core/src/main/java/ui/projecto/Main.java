@@ -7,11 +7,15 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import ui.projecto.mecanicas.Enemy;
+import ui.projecto.mecanicas.Enemies.Enemy;
+import ui.projecto.mecanicas.Enemies.EnemySpawn;
 import ui.projecto.mecanicas.MapManager;
-import ui.projecto.personajes.Enemies.goomba.Goomba;
+import ui.projecto.mecanicas.utils.Heart;
+import ui.projecto.personajes.Enemies.Goomba.Goomba;
+import ui.projecto.personajes.Enemies.Skeleton.Skeleton;
 import ui.projecto.personajes.Player.Player;
 import ui.projecto.personajes.Player.PlayerUI;
 import ui.projecto.personajes.Player.estado.PlayerState;
@@ -32,6 +36,8 @@ public class Main extends ApplicationAdapter {
 
     private PlayerUI playerUI;
     private List<Enemy> enemies;
+    private List<Heart> hearts;
+    private float healCooldown = 0f;
 
     private boolean fullscreen = false;
 
@@ -49,16 +55,29 @@ public class Main extends ApplicationAdapter {
         uiCamera.setToOrtho(false, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
 
         mapManager = new MapManager("maps/beta/mapabase.tmx");
-        jugadorPrincipal = new Player(250, 250, mapManager);
+        Vector2 playerSpawn = mapManager.getRandomPlayerSpawn();
+        jugadorPrincipal = new Player(playerSpawn.x, playerSpawn.y, mapManager);
         playerUI = new PlayerUI(jugadorPrincipal);
 
         font = new BitmapFont();
 
         enemies = new ArrayList<>();
-        for (float[] pos : mapManager.getRandomEnemySpawns()) {
-            enemies.add(new Goomba(pos[0], pos[1], mapManager));
+        for (EnemySpawn spawn : mapManager.getRandomEnemySpawns()) {
+            switch (spawn.type){
+                case "goomba":
+                    enemies.add(new Goomba(spawn.x, spawn.y, mapManager));
+                    break;
+                case "skeleton":
+                    enemies.add(new Skeleton(spawn.x, spawn.y, mapManager));
+                    break;
+                default:
+                    System.out.println("Tipo desconocido: " + spawn.type);
+            }
         }
-
+        hearts = new ArrayList<>();
+        for (Vector2 pos : mapManager.getHearthSpawns()){
+            hearts.add(new Heart(pos.x, pos.y));
+        }
         this.glProfiler = new GLProfiler(Gdx.graphics);
         this.glProfiler.enable();
     }
@@ -93,13 +112,45 @@ public class Main extends ApplicationAdapter {
             enemy.update(deltaTime, jugadorPrincipal);
             enemy.render(batch);
 
-            if (!enemy.isDead() && jugadorPrincipal.getState() == PlayerState.ATTACK && jugadorPrincipal.attackHits(enemy)) {
+            if (!enemy.isDead()
+                && jugadorPrincipal.getState() == PlayerState.ATTACK
+                && !jugadorPrincipal.isAttackHitRegistered()
+                && jugadorPrincipal.attackHits(enemy)) {
                 enemy.recibirDolor(10, jugadorPrincipal.x, jugadorPrincipal.y);
+                jugadorPrincipal.setAttackHitRegistered(true);
             }
 
-            if (!enemy.isDead() && jugadorPrincipal.collidesWithEnemy(enemy)) {
-                int damage = Math.round(jugadorPrincipal.getVida().getVidaMaxima() * 0.05f);
-                jugadorPrincipal.recibirDolor(damage);
+            if (!enemy.isDead()) {
+                enemy.update(deltaTime, jugadorPrincipal);
+                enemy.render(batch);
+
+                if (enemy instanceof Skeleton) {
+                    Skeleton s = (Skeleton) enemy;
+                    if (s.isAttackingPlayer(jugadorPrincipal)){
+                        jugadorPrincipal.recibirDolor(10, enemy.getX(), enemy.getY());
+                    }
+                } else {
+                    if (jugadorPrincipal.collidesWithEnemy(enemy)){
+                        int damage = Math.round(jugadorPrincipal.getVida().getVidaMaxima() * 0.05f);
+                        jugadorPrincipal.recibirDolor(damage, enemy.getX(), enemy.getY());
+                    }
+                }
+            }
+        }
+
+        for (Heart heart : hearts) {
+            heart.update(deltaTime);
+            heart.render(batch);
+            if (!heart.isCollected()
+            && heart.collides(jugadorPrincipal.x, jugadorPrincipal.y, 32,32)
+            && healCooldown <= 0f) {
+                jugadorPrincipal.getVida().curar(20);
+                heart.collect();
+
+                healCooldown = 2f;
+            }
+            if (healCooldown > 0f){
+                healCooldown -= deltaTime;
             }
         }
 
@@ -124,9 +175,8 @@ public class Main extends ApplicationAdapter {
             float y = (ConstantsPlayer.VIRTUAL_HEIGHT - layout.height) / 2 + 50;
             font.draw(batch, layout, x, y);
         }
-
         batch.end();
-        playerUI.render();
+        playerUI.render(batch);
     }
 
 

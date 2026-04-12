@@ -1,4 +1,4 @@
-package ui.projecto.personajes.Enemies.goomba.estado;
+package ui.projecto.personajes.Enemies.Goomba.estado;
 
 public enum GoombaState {
     IDLE,

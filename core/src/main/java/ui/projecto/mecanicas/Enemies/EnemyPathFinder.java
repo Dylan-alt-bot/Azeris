@@ -1,6 +1,8 @@
-package ui.projecto.mecanicas;
+package ui.projecto.mecanicas.Enemies;
 
 import com.badlogic.gdx.math.Vector2;
+import ui.projecto.mecanicas.MapManager;
+
 import java.util.*;
 
 public class EnemyPathFinder {

@@ -15,5 +15,6 @@ public class ConstantsPlayer {
     public static final float COOLDOWN_SPRINT = 2f;
     public static final float SPRINT_IMPULSE = 100f;
 
-    public static final float RETROCESO = 40f;
+    public static final float KNOCKBACK_DURATION = DURACION_DOLOR;
+    public static final float KNOCKBACK_FORCE = 200f;
 }
