@@ -54,7 +54,7 @@ public class Main extends ApplicationAdapter {
         uiCamera = new OrthographicCamera();
         uiCamera.setToOrtho(false, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
 
-        mapManager = new MapManager("maps/beta/mapabase.tmx");
+        mapManager = new MapManager("maps/beta/mapabase2.tmx");
         Vector2 playerSpawn = mapManager.getRandomPlayerSpawn();
         jugadorPrincipal = new Player(playerSpawn.x, playerSpawn.y, mapManager);
         playerUI = new PlayerUI(jugadorPrincipal);

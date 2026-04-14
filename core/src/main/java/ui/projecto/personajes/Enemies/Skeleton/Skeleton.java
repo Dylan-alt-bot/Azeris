@@ -27,7 +27,7 @@ public class Skeleton implements Enemy {
 
     private final EnemyVision vision;
     private final EnemyWander wander;
-    private final EnemyPathFinder pathfinder;
+    private final EnemyPathFinder pathFinder;
 
     private boolean facingRight = false;
 
@@ -50,7 +50,7 @@ public class Skeleton implements Enemy {
         this.map = map;
 
         wander = new EnemyWander(velocidad, 2f, ConstantsSkeleton.DETECTED_PLAYER, map, width, height);
-        pathfinder = new EnemyPathFinder(map, map.getTileSize());
+        pathFinder = new EnemyPathFinder(map, map.getTileSize());
         vision = new EnemyVision(ConstantsSkeleton.DETECTED_PLAYER);
         loadAnimation();
     }
@@ -122,7 +122,7 @@ public class Skeleton implements Enemy {
                     state = SkeletonState.RUN;
                 }
             } else if (state == SkeletonState.RUN) {
-                Vector2 nextStep = pathfinder.findNextStep(x, y, player.x, player.y);
+                Vector2 nextStep = pathFinder.findNextStep(x, y, player.x, player.y);
                 float oldX = x;
                 float dx = player.x - x;
                 float dy = player.y - y;
