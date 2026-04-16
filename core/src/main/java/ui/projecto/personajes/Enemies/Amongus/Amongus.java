@@ -22,7 +22,7 @@ public class Amongus implements Enemy {
     private final float width = 25f, height = 25f;
     private final float velocidad = ConstantsAmongus.VELOCIDAD;
 
-    private final Vida vida = new Vida(100);
+    private final Vida vida = new Vida(80);
     private AmongusState state = AmongusState.IDLE, previousState = AmongusState.IDLE;
     private final AnimationManagerAmongus animations = new AnimationManagerAmongus();
     private final MapManager map;
@@ -33,6 +33,10 @@ public class Amongus implements Enemy {
 
     private boolean facingRight = false;
 
+    private float attackTimer = 0f;
+    private final float attackDuration = ConstantsAmongus.ATTACK_DURATION;
+
+    private float attackRange = ConstantsAmongus.ATTACK_RANGE;
     private float alertTimer = ConstantsAmongus.ALERT_TIMER;
     private boolean alertStarted = ConstantsAmongus.ALERT_STARTED;
 
@@ -59,11 +63,19 @@ public class Amongus implements Enemy {
         Texture hurt = new Texture("enemy/amongus/amongus_herido.png");
         Texture dead = new Texture("enemy/amongus/amongus_muerte.png");
 
+        Texture attack1 = new Texture("enemy/amongus/amongus_ataque1.png");
+        Texture attack2 = new Texture("enemy/amongus/amongus_ataque2.png");
+        Texture attack3 = new Texture("enemy/amongus/amongus_ataque3.png");
+
         animations.add(AmongusState.IDLE, new Animation<>(1f, AnimationLoader.load(idle, 1,1)));
         animations.add(AmongusState.RUN, new Animation<>(0.06f, AnimationLoader.load(run, 4,3)));
         animations.add(AmongusState.ALERT, new Animation<>(0.04f, AnimationLoader.load(alert, 3,3)));
         animations.add(AmongusState.HURT, new Animation<>(0.03f, AnimationLoader.load(hurt, 3,3)));
         animations.add(AmongusState.DEAD, new Animation<>(0.05f, AnimationLoader.load(dead, 4,4)));
+
+        animations.add(AmongusState.ATTACK_1, new Animation<>(0.08f, AnimationLoader.load(attack1, 3,3)));
+        animations.add(AmongusState.ATTACK_2, new Animation<>(0.08f, AnimationLoader.load(attack2, 3,3)));
+        animations.add(AmongusState.ATTACK_3, new Animation<>(0.08f, AnimationLoader.load(attack3, 3,3)));
     }
 
     @Override
@@ -74,15 +86,22 @@ public class Amongus implements Enemy {
             state = AmongusState.DEAD;
             return;
         }
-        previousState = state;
 
         if (damageCooldown > 0f) damageCooldown -= delta;
 
         if (state == AmongusState.HURT) {
             hurtTimer -= delta;
             if (hurtTimer <= 0f) {
-                state = AmongusState.IDLE;
+                state = AmongusState.RUN;
             }
+        }
+
+        if (state == AmongusState.ATTACK_1 || state == AmongusState.ATTACK_2 || state == AmongusState.ATTACK_3) {
+            attackTimer += delta;
+            if (attackTimer >= attackDuration) {
+                state = AmongusState.RUN;
+            }
+            return;
         }
 
         if (vision.isPlayerInRange(x,y, player.x, player.y)) {
@@ -100,18 +119,28 @@ public class Amongus implements Enemy {
                     state = AmongusState.RUN;
                 }
             } else if (state == AmongusState.RUN) {
-                Vector2 nextStep = pathFinder.findNextStep(x,y,player.x,player.y);
+                float dx = player.x - x;
+                float dy = player.y - y;
+                float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
+                if (dist < attackRange) {
+                    startAttack();
+
+                    return;
+                }
+                Vector2 nextStep = pathFinder.findNextStep(x,y,player.x,player.y);
                 if (nextStep != null) {
-                    float dx = nextStep.x - x;
-                    float dy = nextStep.y - y;
-                    float length = (float) Math.sqrt(dx * dx + dy * dy);
+                    float ndx = nextStep.x - x;
+                    float ndy = nextStep.y - y;
+                    float length = (float) Math.sqrt(ndx * ndx + ndy * ndy);
+
+
                     if (length != 0) {
-                        dx /= length;
-                        dy /= length;
+                        ndx /= length;
+                        ndy /= length;
                     }
-                    float moveX = x + dx * velocidad * delta;
-                    float moveY = y + dy * velocidad * delta;
+                    float moveX = x + ndx * velocidad * delta;
+                    float moveY = y + ndy * velocidad * delta;
 
                     if (!map.isBlocked(moveX, y , width, height)) x = moveX;
                     if (!map.isBlocked(x, moveY , width, height)) y = moveY;
@@ -166,10 +195,10 @@ public class Amongus implements Enemy {
         Animation<TextureRegion> anim = animations.get(state);
         if (anim != null) {
             TextureRegion currentFrame;
-            if (state != AmongusState.DEAD) {
-                currentFrame = anim.getKeyFrame(tiempo, true);
-            } else {
+            if (state == AmongusState.DEAD || state == AmongusState.HURT) {
                 currentFrame = anim.getKeyFrame(tiempo, false);
+            } else {
+                currentFrame = anim.getKeyFrame(tiempo, true);
             }
             TextureRegion frame = new TextureRegion(currentFrame);
             if (facingRight && !frame.isFlipX()){
@@ -180,6 +209,38 @@ public class Amongus implements Enemy {
             }
             batch.draw(frame, x, y, width, height);
         }
+    }
+
+    public boolean isAttackingPlayer(Player player) {
+        if (state != AmongusState.ATTACK_1 &&
+            state != AmongusState.ATTACK_2 &&
+            state != AmongusState.ATTACK_3) return false;
+
+        float dx = player.x - x;
+        float dy = player.y - y;
+        float dist = (float) Math.sqrt(dx * dx + dy * dy);
+
+        return dist <= attackRange;
+    }
+
+    private void startAttack() {
+        int r = (int) (Math.random() * 3);
+        switch (r) {
+            case 1:{
+                state = AmongusState.ATTACK_2;
+                break;
+            }
+            case 2:{
+                state = AmongusState.ATTACK_3;
+                break;
+            }
+            default:{
+                state = AmongusState.ATTACK_1;
+                break;
+            }
+        }
+        attackTimer = 0f;
+        tiempo = 0f;
     }
 
     @Override
@@ -244,7 +305,6 @@ public class Amongus implements Enemy {
         tiempo = 0f;
         hurtTimer = 0.3f;
     }
-
 
     @Override
     public boolean isDead() {

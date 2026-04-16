@@ -4,7 +4,9 @@ public enum AmongusState {
     IDLE,
     RUN,
     ALERT,
-    ATTACK,
+    ATTACK_1,
+    ATTACK_2,
+    ATTACK_3,
     HURT,
-    DEAD
+    DEAD,
 }

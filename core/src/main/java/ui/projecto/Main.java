@@ -40,6 +40,9 @@ public class Main extends ApplicationAdapter {
     private List<Heart> hearts;
     private float healCooldown = 0f;
 
+    private int enemiesKilled = 0;
+    private Set<Enemy> countEnemies = new HashSet<>();
+
     private boolean fullscreen = false;
 
     @Override
@@ -64,7 +67,7 @@ public class Main extends ApplicationAdapter {
 
         enemies = new ArrayList<>();
         for (EnemySpawn spawn : mapManager.getRandomEnemySpawns()) {
-            switch (spawn.type){
+            switch (spawn.type) {
                 case "goomba":
                     enemies.add(new Goomba(spawn.x, spawn.y, mapManager));
                     break;
@@ -79,7 +82,7 @@ public class Main extends ApplicationAdapter {
             }
         }
         hearts = new ArrayList<>();
-        for (Vector2 pos : mapManager.getHearthSpawns()){
+        for (Vector2 pos : mapManager.getHearthSpawns()) {
             hearts.add(new Heart(pos.x, pos.y));
         }
         this.glProfiler = new GLProfiler(Gdx.graphics);
@@ -114,6 +117,11 @@ public class Main extends ApplicationAdapter {
 
         for (Enemy enemy : enemies) {
             enemy.update(deltaTime, jugadorPrincipal);
+
+            if (enemy.isDead() && !countEnemies.contains(enemy)){
+                enemiesKilled++;
+                countEnemies.add(enemy);
+            }
             enemy.render(batch);
 
             if (!enemy.isDead()
@@ -127,11 +135,16 @@ public class Main extends ApplicationAdapter {
             if (!enemy.isDead()) {
                 if (enemy instanceof Skeleton) {
                     Skeleton s = (Skeleton) enemy;
-                    if (s.isAttackingPlayer(jugadorPrincipal)){
+                    if (s.isAttackingPlayer(jugadorPrincipal)) {
                         jugadorPrincipal.recibirDolor(10, enemy.getX(), enemy.getY());
                     }
+                } else if (enemy instanceof Amongus) {
+                    Amongus a = (Amongus) enemy;
+                    if (a.isAttackingPlayer(jugadorPrincipal)) {
+                        jugadorPrincipal.recibirDolor(15, enemy.getX(), enemy.getY());
+                    }
                 } else {
-                    if (jugadorPrincipal.collidesWithEnemy(enemy)){
+                    if (jugadorPrincipal.collidesWithEnemy(enemy)) {
                         int damage = Math.round(jugadorPrincipal.getVida().getVidaMaxima() * 0.05f);
                         jugadorPrincipal.recibirDolor(damage, enemy.getX(), enemy.getY());
                     }
@@ -143,14 +156,14 @@ public class Main extends ApplicationAdapter {
             heart.update(deltaTime);
             heart.render(batch);
             if (!heart.isCollected()
-            && heart.collides(jugadorPrincipal.x, jugadorPrincipal.y, 32,32)
-            && healCooldown <= 0f) {
+                && heart.collides(jugadorPrincipal.x, jugadorPrincipal.y, 32, 32)
+                && healCooldown <= 0f) {
                 jugadorPrincipal.getVida().curar(20);
                 heart.collect();
 
                 healCooldown = 2f;
             }
-            if (healCooldown > 0f){
+            if (healCooldown > 0f) {
                 healCooldown -= deltaTime;
             }
         }
@@ -162,10 +175,13 @@ public class Main extends ApplicationAdapter {
         batch.setProjectionMatrix(uiCamera.combined);
         batch.begin();
 
+        String killsText = "Enemigos matados: " + enemiesKilled;
+        font.draw(batch, killsText, 20, 430);
+
         if (jugadorPrincipal.sprintOnCooldown()) {
             float remaining = jugadorPrincipal.getSprintCooldown();
             String text = String.format("Sprint: %.1f s", remaining);
-            font.draw(batch, text, 20, 430);
+            font.draw(batch, text, 20, 410);
         }
 
         if (jugadorPrincipal.getVida().isMuerto()) {

@@ -20,7 +20,7 @@ public class Skeleton implements Enemy {
     private final float width = 32f, height = 32f;
     private final float velocidad = ConstantsSkeleton.VELOCIDAD;
 
-    private final Vida vida = new Vida(80);
+    private final Vida vida = new Vida(60);
     private SkeletonState state = SkeletonState.IDLE, previousState = SkeletonState.IDLE;
     private final AnimationManagerSkeleton animations = new AnimationManagerSkeleton();
     private final MapManager map;
