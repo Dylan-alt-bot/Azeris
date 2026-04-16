@@ -1,7 +1,7 @@
 package ui.projecto.personajes.Enemies.Goomba.util;
 
 public class ConstantsGoomba {
-    public static final float VELOCIDAD = 30f;
+    public static final float VELOCIDAD = 50f;
     public static final float DETECTED_PLAYER = 150f;
 
     public static final float ALERT_DURATION = 1f;

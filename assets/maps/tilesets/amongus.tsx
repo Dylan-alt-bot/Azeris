@@ -3,7 +3,7 @@
  <image source="../textures/among us.png" width="30" height="30"/>
  <tile id="0">
   <properties>
-   <property name="type" value="amongus"/>
+   <property name="type" value="among us"/>
   </properties>
  </tile>
 </tileset>

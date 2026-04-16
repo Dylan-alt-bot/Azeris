@@ -1,7 +1,7 @@
 package ui.projecto.personajes.Enemies.Skeleton.util;
 
 public class ConstantsSkeleton {
-    public static final float VELOCIDAD = 40f;
+    public static final float VELOCIDAD = 60f;
     public static final float DETECTED_PLAYER = 150f;
 
     public static float ALERT_TIMER = 0f;

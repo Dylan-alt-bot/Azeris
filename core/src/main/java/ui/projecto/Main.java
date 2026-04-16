@@ -14,6 +14,7 @@ import ui.projecto.mecanicas.Enemies.Enemy;
 import ui.projecto.mecanicas.Enemies.EnemySpawn;
 import ui.projecto.mecanicas.MapManager;
 import ui.projecto.mecanicas.utils.Heart;
+import ui.projecto.personajes.Enemies.Amongus.Amongus;
 import ui.projecto.personajes.Enemies.Goomba.Goomba;
 import ui.projecto.personajes.Enemies.Skeleton.Skeleton;
 import ui.projecto.personajes.Player.Player;
@@ -70,6 +71,9 @@ public class Main extends ApplicationAdapter {
                 case "skeleton":
                     enemies.add(new Skeleton(spawn.x, spawn.y, mapManager));
                     break;
+                case "among us":
+                    enemies.add(new Amongus(spawn.x, spawn.y, mapManager));
+                    break;
                 default:
                     System.out.println("Tipo desconocido: " + spawn.type);
             }
@@ -121,9 +125,6 @@ public class Main extends ApplicationAdapter {
             }
 
             if (!enemy.isDead()) {
-                enemy.update(deltaTime, jugadorPrincipal);
-                enemy.render(batch);
-
                 if (enemy instanceof Skeleton) {
                     Skeleton s = (Skeleton) enemy;
                     if (s.isAttackingPlayer(jugadorPrincipal)){

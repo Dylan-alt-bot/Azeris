@@ -226,10 +226,10 @@ public class Skeleton implements Enemy {
     }
 
     @Override
-    public boolean collides(float px, float py, float ew, float eh) {
-        return !(px + ew < x ||
+    public boolean collides(float px, float py, float pw, float ph) {
+        return !(px + pw < x ||
             px > x + width ||
-            py + eh < y ||
+            py + ph < y ||
             py > y + height);
     }
 
