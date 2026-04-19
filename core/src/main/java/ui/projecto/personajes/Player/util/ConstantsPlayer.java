@@ -4,6 +4,9 @@ public class ConstantsPlayer {
     public static final float VIRTUAL_WIDTH = 650;
     public static final float VIRTUAL_HEIGHT = 480;
 
+    public static final float PLAYER_WIDTH = 20f;
+    public static final float PLAYER_HEIGHT = 20f;
+
     public static final float VELOCIDAD = 150f;
     public static final float VELOCIDAD_SPRINT = 300f;
 

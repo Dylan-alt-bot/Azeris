@@ -108,7 +108,7 @@ public class MapManager {
         List<EnemySpawn> selected = new ArrayList<>();
         Random random = new Random();
         if (enemySpawns.isEmpty()) return selected;
-        int count = random.nextInt(enemySpawns.size() - 3) + 3;
+        int count = random.nextInt(enemySpawns.size()) + 1;
         List<EnemySpawn> copy = new ArrayList<>(enemySpawns);
         for (int i = 0; i < count; i++) {
             int index = random.nextInt(copy.size());

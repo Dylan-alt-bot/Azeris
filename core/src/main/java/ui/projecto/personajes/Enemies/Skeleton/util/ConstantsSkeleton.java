@@ -12,7 +12,7 @@ public class ConstantsSkeleton {
     public static float DAMAGE_COOLDOWN = 0f;
 
     public static float ATTACK_RANGE = 20f;
-    public static float ATTACK_COOLDOWN = 0.8f;
+    public static float ATTACK_COOLDOWN = 0.4f;
     public static float ATAQUE_COOLDOWN = 0f;
 
     public static float KNOCKBAR_FORCE = 150f;

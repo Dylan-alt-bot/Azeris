@@ -36,7 +36,7 @@ public class Amongus implements Enemy {
     private float attackTimer = 0f;
     private final float attackDuration = ConstantsAmongus.ATTACK_DURATION;
 
-    private float attackRange = ConstantsAmongus.ATTACK_RANGE;
+    private final float attackRange = ConstantsAmongus.ATTACK_RANGE;
     private float alertTimer = ConstantsAmongus.ALERT_TIMER;
     private boolean alertStarted = ConstantsAmongus.ALERT_STARTED;
 

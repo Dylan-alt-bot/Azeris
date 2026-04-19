@@ -20,14 +20,13 @@ public class Player{
     public float x, y;
     private final float spawnX, spawnY;
     private PlayerState previousState;
-    public boolean attackHitRegistered = false;
+    private PlayerState state;
 
     private final MapManager map;
     private final Vida vida;
-
-    private PlayerState state;
     private final AnimationManager animations;
     private final PlayerRenderer renderer;
+
 
     private float tiempo = 0f;
 
@@ -39,6 +38,7 @@ public class Player{
 
     private float cooldownTimer = 0f;
     private float attackTimer = 0f;
+    public boolean attackHitRegistered = false;
 
     private float hurtTimer = 0f;
     private float damageCooldown = 1f;
@@ -366,5 +366,13 @@ public class Player{
 
     public void setAttackHitRegistered(boolean value){
         attackHitRegistered = value;
+    }
+
+    public float getWidth(){
+        return ConstantsPlayer.PLAYER_WIDTH;
+    }
+
+    public float getHeight(){
+        return ConstantsPlayer.PLAYER_HEIGHT;
     }
 }

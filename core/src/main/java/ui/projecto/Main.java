@@ -15,6 +15,7 @@ import ui.projecto.mecanicas.Enemies.EnemySpawn;
 import ui.projecto.mecanicas.MapManager;
 import ui.projecto.mecanicas.utils.Heart;
 import ui.projecto.personajes.Enemies.Amongus.Amongus;
+import ui.projecto.personajes.Enemies.Diablo.Diablo;
 import ui.projecto.personajes.Enemies.Goomba.Goomba;
 import ui.projecto.personajes.Enemies.Skeleton.Skeleton;
 import ui.projecto.personajes.Player.Player;
@@ -41,7 +42,7 @@ public class Main extends ApplicationAdapter {
     private float healCooldown = 0f;
 
     private int enemiesKilled = 0;
-    private Set<Enemy> countEnemies = new HashSet<>();
+    private final Set<Enemy> countEnemies = new HashSet<>();
 
     private boolean fullscreen = false;
 
@@ -76,6 +77,9 @@ public class Main extends ApplicationAdapter {
                     break;
                 case "among us":
                     enemies.add(new Amongus(spawn.x, spawn.y, mapManager));
+                    break;
+                case "diablo":
+                    enemies.add(new Diablo(spawn.x, spawn.y, mapManager));
                     break;
                 default:
                     System.out.println("Tipo desconocido: " + spawn.type);
@@ -143,10 +147,14 @@ public class Main extends ApplicationAdapter {
                     if (a.isAttackingPlayer(jugadorPrincipal)) {
                         jugadorPrincipal.recibirDolor(15, enemy.getX(), enemy.getY());
                     }
+                } else if (enemy instanceof Diablo) {
+                    Diablo d = (Diablo) enemy;
+                    if (d.isAttackingPlayer(jugadorPrincipal)){
+                        jugadorPrincipal.recibirDolor(20, enemy.getX(), enemy.getY());
+                    }
                 } else {
                     if (jugadorPrincipal.collidesWithEnemy(enemy)) {
-                        int damage = Math.round(jugadorPrincipal.getVida().getVidaMaxima() * 0.05f);
-                        jugadorPrincipal.recibirDolor(damage, enemy.getX(), enemy.getY());
+                        jugadorPrincipal.recibirDolor(5, enemy.getX(), enemy.getY());
                     }
                 }
             }
