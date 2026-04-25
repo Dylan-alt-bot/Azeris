@@ -24,6 +24,7 @@ public class MapManager {
     private final List<Vector2> playerSpawns;
     private final List<EnemySpawn> enemySpawns;
     private final List<Vector2> hearthSpawns;
+    private final List<Vector2> azerisSpawns;
 
     private final int tileSize;
 
@@ -64,13 +65,29 @@ public class MapManager {
             }
         }
         hearthSpawns = new ArrayList<>();
-        MapLayer hearthLayer = roomGroupLayer.getLayers().get("Heart");
-        if (hearthLayer != null){
-            for (MapObject obj : hearthLayer.getObjects()) {
+        azerisSpawns = new ArrayList<>();
+
+        MapLayer utilsLayer = roomGroupLayer.getLayers().get("Utils");
+
+        if (utilsLayer != null) {
+            for (MapObject obj : utilsLayer.getObjects()) {
                 float x = obj.getProperties().get("x", Float.class);
                 float y = obj.getProperties().get("y", Float.class);
+                String type = obj.getProperties().get("type", String.class);
+                if (type == null && obj instanceof TiledMapTileMapObject) {
+                    TiledMapTileMapObject tileObj = (TiledMapTileMapObject) obj;
+                    type = tileObj.getTile().getProperties().get("type", String.class);
+                }
+                if (type == null) continue;
+                switch (type) {
+                    case "corazon":
+                        hearthSpawns.add(new Vector2(x, y));
+                        break;
 
-                hearthSpawns.add(new Vector2(x,y));
+                    case "azeris":
+                        azerisSpawns.add(new Vector2(x, y));
+                        break;
+                }
             }
         }
     }
@@ -115,7 +132,7 @@ public class MapManager {
             selected.add(copy.get(index));
             copy.remove(index);
         }
-        System.out.println("Enemigos spawneados: " + count);
+        System.out.println("[ENEMY] Enemigos spawneados: " + count);
         return selected;
     }
 
@@ -130,10 +147,20 @@ public class MapManager {
             selected.add(copy.get(index));
             copy.remove(index);
         }
-        System.out.println("Corazones spawneados: " + count);
+        System.out.println("[HEART] Corazones spawneados: " + count);
         return selected;
     }
 
+    public Vector2 getAzerisSpawn() {
+        if (azerisSpawns.isEmpty()) {
+            System.out.println("[AZERIS] Spawn fallido");
+            return null;
+        }
+        Random random = new Random();
+        Vector2 spawn = azerisSpawns.get(random.nextInt(azerisSpawns.size()));
+        System.out.println("[AZERIS] Spawn correcto");
+        return spawn;
+    }
     public int getTileSize() {
         return tileSize;
     }

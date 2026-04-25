@@ -6,7 +6,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import ui.projecto.mecanicas.AnimationLoader;
 
-public class Heart {
+public class Heart implements Utils{
     private final float x,y;
     private final float width = 16f,height = 16f;
     private final Animation<TextureRegion> anim;
@@ -17,9 +17,8 @@ public class Heart {
     public Heart(float x, float y) {
         this.x = x;
         this.y = y;
-
         Texture heart = new Texture("utils/corazon.png");
-        this.anim = new Animation<>(0.1f, AnimationLoader.load(heart, 5,4));
+        this.anim = new Animation<>(0.08f, AnimationLoader.load(heart, 5,4));
     }
 
     public void update(float delta) {
@@ -29,7 +28,6 @@ public class Heart {
 
     public void render(SpriteBatch batch) {
         if (collected) return;
-
         TextureRegion frame = anim.getKeyFrame(tiempo, true);
         batch.draw(frame, x, y);
     }

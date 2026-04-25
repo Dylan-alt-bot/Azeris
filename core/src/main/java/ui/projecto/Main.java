@@ -13,11 +13,17 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import ui.projecto.mecanicas.Enemies.Enemy;
 import ui.projecto.mecanicas.Enemies.EnemySpawn;
 import ui.projecto.mecanicas.MapManager;
+import ui.projecto.mecanicas.utils.Azeris;
 import ui.projecto.mecanicas.utils.Heart;
+import ui.projecto.mecanicas.utils.Utils;
 import ui.projecto.personajes.Enemies.Amongus.Amongus;
+import ui.projecto.personajes.Enemies.Amongus.util.ConstantsAmongus;
 import ui.projecto.personajes.Enemies.Diablo.Diablo;
+import ui.projecto.personajes.Enemies.Diablo.util.ConstantsDiablo;
 import ui.projecto.personajes.Enemies.Goomba.Goomba;
+import ui.projecto.personajes.Enemies.Goomba.util.ConstantsGoomba;
 import ui.projecto.personajes.Enemies.Skeleton.Skeleton;
+import ui.projecto.personajes.Enemies.Skeleton.util.ConstantsSkeleton;
 import ui.projecto.personajes.Player.Player;
 import ui.projecto.personajes.Player.PlayerUI;
 import ui.projecto.personajes.Player.estado.PlayerState;
@@ -36,10 +42,14 @@ public class Main extends ApplicationAdapter {
     private OrthographicCamera uiCamera;
     private BitmapFont font;
 
+    private Vector2 playerSpawn;
     private PlayerUI playerUI;
     private List<Enemy> enemies;
-    private List<Heart> hearts;
+    private List<Utils> utils;
     private float healCooldown = 0f;
+
+    private List<EnemySpawn> initialEnemySpawns;
+    private List<Vector2> initialHeartSpawns;
 
     private int enemiesKilled = 0;
     private final Set<Enemy> countEnemies = new HashSet<>();
@@ -59,35 +69,30 @@ public class Main extends ApplicationAdapter {
         uiCamera = new OrthographicCamera();
         uiCamera.setToOrtho(false, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
 
-        mapManager = new MapManager("maps/beta/mapabase2.tmx");
-        Vector2 playerSpawn = mapManager.getRandomPlayerSpawn();
+        mapManager = new MapManager("maps/beta/mapabase.tmx");
+        playerSpawn = mapManager.getRandomPlayerSpawn();
         jugadorPrincipal = new Player(playerSpawn.x, playerSpawn.y, mapManager);
         playerUI = new PlayerUI(jugadorPrincipal);
 
         font = new BitmapFont();
 
+        initialEnemySpawns = mapManager.getRandomEnemySpawns();
         enemies = new ArrayList<>();
-        for (EnemySpawn spawn : mapManager.getRandomEnemySpawns()) {
-            switch (spawn.type) {
-                case "goomba":
-                    enemies.add(new Goomba(spawn.x, spawn.y, mapManager));
-                    break;
-                case "skeleton":
-                    enemies.add(new Skeleton(spawn.x, spawn.y, mapManager));
-                    break;
-                case "among us":
-                    enemies.add(new Amongus(spawn.x, spawn.y, mapManager));
-                    break;
-                case "diablo":
-                    enemies.add(new Diablo(spawn.x, spawn.y, mapManager));
-                    break;
-                default:
-                    System.out.println("Tipo desconocido: " + spawn.type);
-            }
+        for (EnemySpawn spawn : initialEnemySpawns) {
+            Enemy enemy = createEnemy(spawn);
+            if (enemy != null) enemies.add(enemy);
         }
-        hearts = new ArrayList<>();
-        for (Vector2 pos : mapManager.getHearthSpawns()) {
-            hearts.add(new Heart(pos.x, pos.y));
+
+        initialHeartSpawns = mapManager.getHearthSpawns();
+
+        utils = new ArrayList<>();
+        for (Vector2 pos : mapManager.getHearthSpawns()){
+            utils.add(new Heart(pos.x, pos.y));
+        }
+
+        Vector2 azerisSpawn = mapManager.getAzerisSpawn();
+        if (azerisSpawn != null){
+            utils.add(new Azeris(azerisSpawn.x, azerisSpawn.y));
         }
         this.glProfiler = new GLProfiler(Gdx.graphics);
         this.glProfiler.enable();
@@ -98,6 +103,16 @@ public class Main extends ApplicationAdapter {
         if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) toggleFullscreen();
 
         float deltaTime = Gdx.graphics.getDeltaTime();
+
+        if (jugadorPrincipal.getVida().isMuerto() && Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+            jugadorPrincipal.getVida().revivir();
+
+            jugadorPrincipal.x = playerSpawn.x;
+            jugadorPrincipal.y = playerSpawn.y;
+
+            resetEnemies();
+            resetUtils();
+        }
 
         jugadorPrincipal.update(deltaTime, enemies);
 
@@ -132,7 +147,7 @@ public class Main extends ApplicationAdapter {
                 && jugadorPrincipal.getState() == PlayerState.ATTACK
                 && !jugadorPrincipal.isAttackHitRegistered()
                 && jugadorPrincipal.attackHits(enemy)) {
-                enemy.recibirDolor(10, jugadorPrincipal.x, jugadorPrincipal.y);
+                enemy.recibirDolor(jugadorPrincipal.damage, jugadorPrincipal.x, jugadorPrincipal.y);
                 jugadorPrincipal.setAttackHitRegistered(true);
             }
 
@@ -140,46 +155,45 @@ public class Main extends ApplicationAdapter {
                 if (enemy instanceof Skeleton) {
                     Skeleton s = (Skeleton) enemy;
                     if (s.isAttackingPlayer(jugadorPrincipal)) {
-                        jugadorPrincipal.recibirDolor(10, enemy.getX(), enemy.getY());
+                        jugadorPrincipal.recibirDolor(ConstantsSkeleton.DOLOR, enemy.getX(), enemy.getY());
                     }
                 } else if (enemy instanceof Amongus) {
                     Amongus a = (Amongus) enemy;
                     if (a.isAttackingPlayer(jugadorPrincipal)) {
-                        jugadorPrincipal.recibirDolor(15, enemy.getX(), enemy.getY());
+                        jugadorPrincipal.recibirDolor(ConstantsAmongus.DOLOR, enemy.getX(), enemy.getY());
                     }
                 } else if (enemy instanceof Diablo) {
                     Diablo d = (Diablo) enemy;
                     if (d.isAttackingPlayer(jugadorPrincipal)){
-                        jugadorPrincipal.recibirDolor(20, enemy.getX(), enemy.getY());
+                        jugadorPrincipal.recibirDolor(ConstantsDiablo.DOLOR, enemy.getX(), enemy.getY());
                     }
                 } else {
                     if (jugadorPrincipal.collidesWithEnemy(enemy)) {
-                        jugadorPrincipal.recibirDolor(5, enemy.getX(), enemy.getY());
+                        jugadorPrincipal.recibirDolor(ConstantsGoomba.DOLOR, enemy.getX(), enemy.getY());
                     }
                 }
             }
         }
-
-        for (Heart heart : hearts) {
-            heart.update(deltaTime);
-            heart.render(batch);
-            if (!heart.isCollected()
-                && heart.collides(jugadorPrincipal.x, jugadorPrincipal.y, 32, 32)
-                && healCooldown <= 0f) {
-                jugadorPrincipal.getVida().curar(20);
-                heart.collect();
-
-                healCooldown = 2f;
-            }
-            if (healCooldown > 0f) {
-                healCooldown -= deltaTime;
+        for (Utils u : utils) {
+            if (u.isCollected()) continue;
+            u.update(deltaTime);
+            u.render(batch);
+            if (u.collides(jugadorPrincipal.x, jugadorPrincipal.y, 21, 21)) {
+                if (u instanceof Heart){
+                    jugadorPrincipal.getVida().curar(20);
+                    u.collect();
+                }
+                else if (u instanceof Azeris){
+                    jugadorPrincipal.applyAzerisBoost();
+                    System.out.println("[AZERIS] Boost aplicado al jugador");
+                    u.collect();
+                }
             }
         }
 
         jugadorPrincipal.render(batch, deltaTime);
 
         batch.end();
-
         batch.setProjectionMatrix(uiCamera.combined);
         batch.begin();
 
@@ -224,5 +238,40 @@ public class Main extends ApplicationAdapter {
         batch.dispose();
         glProfiler.disable();
         playerUI.dispose();
+    }
+
+    private Enemy createEnemy(EnemySpawn spawn){
+        switch (spawn.type) {
+            case "goomba": return new Goomba(spawn.x, spawn.y, mapManager);
+            case "skeleton": return new Skeleton(spawn.x, spawn.y, mapManager);
+            case "among us": return new Amongus(spawn.x, spawn.y, mapManager);
+            case "diablo": return new Diablo(spawn.x, spawn.y, mapManager);
+            default:
+                System.out.println("Tipo desconocido: " + spawn.type);
+                return null;
+        }
+    }
+
+    private void resetEnemies(){
+        enemies.clear();
+        for (EnemySpawn spawn : initialEnemySpawns){
+            Enemy enemy = createEnemy(spawn);
+            if (enemy != null) enemies.add(enemy);
+        }
+        enemiesKilled = 0;
+        countEnemies.clear();
+    }
+
+    private void resetUtils(){
+        utils.clear();
+        if (initialHeartSpawns != null){
+            for (Vector2 pos : initialHeartSpawns){
+                utils.add(new Heart(pos.x, pos.y));
+            }
+        }
+        Vector2 azerisSpawn = mapManager.getAzerisSpawn();
+        if (azerisSpawn != null){
+            utils.add(new Azeris(azerisSpawn.x, azerisSpawn.y));
+        }
     }
 }

@@ -17,10 +17,10 @@ import ui.projecto.personajes.Player.Player;
 
 public class Skeleton implements Enemy {
     private float x, y, tiempo = 0f;
-    private final float width = 32f, height = 32f;
+    private final float width = ConstantsSkeleton.WIDTH, height = ConstantsSkeleton.HEIGHT;
     private final float velocidad = ConstantsSkeleton.VELOCIDAD;
 
-    private final Vida vida = new Vida(60);
+    private final Vida vida = new Vida(ConstantsSkeleton.VIDA);
     private SkeletonState state = SkeletonState.IDLE, previousState = SkeletonState.IDLE;
     private final AnimationManagerSkeleton animations = new AnimationManagerSkeleton();
     private final MapManager map;
@@ -30,15 +30,13 @@ public class Skeleton implements Enemy {
     private final EnemyPathFinder pathFinder;
 
     private boolean facingRight = false;
+    private boolean alertStarted = false;
 
-    private float alertTimer = ConstantsSkeleton.ALERT_TIMER;
-    private boolean alertStarted = ConstantsSkeleton.ALERT_STARTED;
+    private float alertTimer = 0f;
+    private float hurtTimer = 0f;
+    private float attackTimer = 0f;
+    private float damageTimer = 0f;
 
-    private float hurtTimer = ConstantsSkeleton.HURT_TIMER;
-    private float damageCooldown = ConstantsSkeleton.DAMAGE_COOLDOWN;
-
-
-    private float ataqueCooldown = ConstantsSkeleton.ATAQUE_COOLDOWN;
     private final float attackCooldown = ConstantsSkeleton.ATTACK_COOLDOWN;
     private final float attackRange = ConstantsSkeleton.ATTACK_RANGE;
 
@@ -49,7 +47,7 @@ public class Skeleton implements Enemy {
         this.y = y;
         this.map = map;
 
-        wander = new EnemyWander(velocidad, 2f, ConstantsSkeleton.DETECTED_PLAYER, map, width, height);
+        wander = new EnemyWander(velocidad, ConstantsSkeleton.WAIT_TIMER, ConstantsSkeleton.DETECTED_PLAYER, map, width, height);
         pathFinder = new EnemyPathFinder(map, map.getTileSize());
         vision = new EnemyVision(ConstantsSkeleton.DETECTED_PLAYER);
         loadAnimation();
@@ -82,7 +80,7 @@ public class Skeleton implements Enemy {
             return;
         }
 
-        if (damageCooldown > 0f) damageCooldown -= delta;
+        if (damageTimer > 0f) damageTimer -= delta;
 
 
         if (state == SkeletonState.HURT) {
@@ -99,13 +97,13 @@ public class Skeleton implements Enemy {
 
             facingRight = dx > 0;
 
-            if (dist > attackRange + 10f){
+            if (dist > attackRange){
                 state = SkeletonState.RUN;
                 return;
             }
 
-            if (ataqueCooldown <= 0f){
-                ataqueCooldown = attackCooldown;
+            if (attackTimer <= 0f){
+                attackTimer = attackCooldown;
             }
         }
 
@@ -256,30 +254,26 @@ public class Skeleton implements Enemy {
 
     @Override
     public void recibirDolor(int cantidad, float sourceX, float sourceY) {
-        if (damageCooldown > 0f) return;
-
+        if (damageTimer > 0f) return;
         vida.recibirDolor(cantidad);
-        damageCooldown = 0.15f;
+        damageTimer = 0.15f;
 
         float dx = x - sourceX;
         float dy = y - sourceY;
         float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
         if (dist != 0){
-            float force = ConstantsSkeleton.KNOCKBAR_FORCE;
+            float force = ConstantsSkeleton.KNOCKBACK_FORCE;
             knockbackX = (dx / dist) * force;
             knockbackY = (dy / dist) * force;
-            knockbackTimer = 0.2f;
+            knockbackTimer = ConstantsSkeleton.KNOCKBACK_COOLDOWN;
         }
-
         facingRight = dx > 0;
-
         if (vida.isMuerto()){
             state = SkeletonState.DEAD;
             tiempo = 0f;
             return;
         }
-
         previousState = state;
         state = SkeletonState.HURT;
         hurtTimer = 0.3f;

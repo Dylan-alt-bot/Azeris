@@ -1,4 +1,4 @@
-package ui.projecto.personajes.Player.animacion;
+package ui.projecto.personajes.Player.Manager;
 
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;

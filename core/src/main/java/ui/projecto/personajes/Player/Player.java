@@ -9,7 +9,8 @@ import ui.projecto.mecanicas.Enemies.Enemy;
 import ui.projecto.mecanicas.MapManager;
 import ui.projecto.mecanicas.Vida;
 import ui.projecto.mecanicas.AnimationLoader;
-import ui.projecto.personajes.Player.animacion.AnimationManager;
+import ui.projecto.personajes.Player.Manager.AnimationManager;
+import ui.projecto.personajes.Player.Manager.PlayerAudioManager;
 import ui.projecto.personajes.Player.estado.PlayerState;
 import ui.projecto.personajes.Player.render.PlayerRenderer;
 import ui.projecto.personajes.Player.util.ConstantsPlayer;
@@ -18,38 +19,38 @@ import java.util.List;
 
 public class Player{
     public float x, y;
+    public int damage = ConstantsPlayer.DAMAGE;
     private final float spawnX, spawnY;
-    private PlayerState previousState;
-    private PlayerState state;
+    private float velocidadBase = ConstantsPlayer.VELOCIDAD;
+    private float velocidad = velocidadBase;
+    private PlayerState state = PlayerState.IDLE, previousState = PlayerState.IDLE;
+    private final PlayerAudioManager audio;
 
     private final MapManager map;
-    private final Vida vida;
+    private final Vida vida = new Vida(ConstantsPlayer.VIDA);
     private final AnimationManager animations;
     private final PlayerRenderer renderer;
-
 
     private float tiempo = 0f;
 
     private boolean facingRight = false;
     private boolean sprintCooldown = false;
+    public boolean attackHitRegistered = false;
+    private boolean azerisBoost = false;
+
+    private boolean wasRunning = false;
 
     private float sprintTimer = 0f;
     private float sprintImpulseRemaining = 0f;
-
     private float cooldownTimer = 0f;
     private float attackTimer = 0f;
-    public boolean attackHitRegistered = false;
-
     private float hurtTimer = 0f;
-    private float damageCooldown = 1f;
     private float damageCooldownTimer = 0f;
 
-    private float velocidad = ConstantsPlayer.VELOCIDAD;
-    private float lastDirX = 0f;
-    private float lastDirY = 0f;
+    private final float damageCooldown = ConstantsPlayer.DAMAGE_COOLDOWN;
 
+    private float lastDirX = 0f, lastDirY = 0f;
     private float knockbackX = 0f, knockbackY = 0f, knockbackTimer = 0f;
-
 
     public Player(float x, float y, MapManager map) {
         this.x = x;
@@ -58,12 +59,11 @@ public class Player{
         this.spawnY = y;
         this.map = map;
 
-        this.vida = new Vida(100);
+        this.audio = new PlayerAudioManager();
         this.animations = new AnimationManager();
         this.renderer = new PlayerRenderer();
 
         loadAnimations();
-        state = PlayerState.IDLE;
     }
 
     private void loadAnimations(){
@@ -159,7 +159,7 @@ public class Player{
             if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && !sprintCooldown && state != PlayerState.ATTACK){
                 if (state != PlayerState.SPRINT){
                     state = PlayerState.SPRINT;
-                    velocidad = ConstantsPlayer.VELOCIDAD_SPRINT;
+                    velocidad = velocidadBase * (ConstantsPlayer.VELOCIDAD_SPRINT / ConstantsPlayer.VELOCIDAD);
                     sprintTimer = 0;
                     sprintCooldown = true;
                     tiempo = 0;
@@ -187,7 +187,6 @@ public class Player{
 
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)){
             if (state != PlayerState.ATTACK && state != PlayerState.SPRINT) {
-                velocidad = ConstantsPlayer.VELOCIDAD;
                 sprintImpulseRemaining = 0;
 
                 state = PlayerState.ATTACK;
@@ -204,7 +203,7 @@ public class Player{
         if (state == PlayerState.SPRINT){
             sprintTimer += delta;
             if (sprintTimer >= ConstantsPlayer.DURACION_SPRINT && sprintImpulseRemaining <= 0) {
-                velocidad = ConstantsPlayer.VELOCIDAD;
+                velocidad = velocidadBase;
                 state = PlayerState.IDLE;
             }
             return;
@@ -221,6 +220,15 @@ public class Player{
         if (state != PlayerState.HURT){
             state = moving ? PlayerState.RUN : PlayerState.IDLE;
         }
+
+        boolean isRunningNow = (state == PlayerState.RUN) && moving && knockbackTimer <= 0f;
+        if (isRunningNow && !wasRunning){
+            audio.startRun();
+        }
+        if (!isRunningNow && wasRunning){
+            audio.stopRun();
+        }
+        wasRunning = isRunningNow;
     }
 
 
@@ -325,7 +333,7 @@ public class Player{
 
     public boolean attackHits(Enemy enemy){
         float range = 5f;
-        float width = 50f;
+        float width = 60f;
         float height = 30f;
 
         float attackX = x;
@@ -346,7 +354,7 @@ public class Player{
         y = spawnY;
         state = PlayerState.IDLE;
         tiempo = 0f;
-        velocidad = ConstantsPlayer.VELOCIDAD;
+        velocidad = velocidadBase;
         sprintImpulseRemaining = 0;
         sprintCooldown = false;
         cooldownTimer = 0f;
@@ -369,10 +377,26 @@ public class Player{
     }
 
     public float getWidth(){
-        return ConstantsPlayer.PLAYER_WIDTH;
+        return ConstantsPlayer.WIDTH;
     }
 
     public float getHeight(){
-        return ConstantsPlayer.PLAYER_HEIGHT;
+        return ConstantsPlayer.HEIGHT;
+    }
+
+    public void applyAzerisBoost(){
+        if (azerisBoost) return;
+
+        vida.setMaxVida(vida.getMaxVida() * ConstantsPlayer.AZERIS_HEALTH);
+        vida.curar(vida.getMaxVida());
+
+        this.damage *= ConstantsPlayer.AZERIS_DAMAGE;
+        this.velocidadBase *= ConstantsPlayer.AZERIS_SPEED;
+        this.velocidad = velocidadBase;
+        azerisBoost = true;
+        System.out.println("[PLAYER] Azeris boost aplicado:");
+        System.out.println("  Vida x" + ConstantsPlayer.AZERIS_HEALTH);
+        System.out.println("  Daño x" + ConstantsPlayer.AZERIS_DAMAGE);
+        System.out.println("  Velocidad x" + ConstantsPlayer.AZERIS_SPEED);
     }
 }

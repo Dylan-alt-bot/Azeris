@@ -19,12 +19,12 @@ import ui.projecto.personajes.Player.Player;
 
 public class Diablo implements Enemy {
     private float x, y, tiempo = 0f;
-    private final float width = 200f, height = 200f;
-    private final float hitboxWidth = 90f, hitboxHeight = 160f;
+    private final float width = ConstantsDiablo.WIDTH, height = ConstantsDiablo.HEIGHT;
+    private final float hitboxWidth = ConstantsDiablo.HITBOX_WIDTH, hitboxHeight = ConstantsDiablo.HITBOX_HEIGHT;
     private final float velocidad = ConstantsDiablo.VELOCIDAD;
 
-    private final Vida vida = new Vida(500);
-    private DiabloState state = DiabloState.IDLE, previousState = DiabloState.IDLE;
+    private final Vida vida = new Vida(ConstantsDiablo.VIDA);
+    private DiabloState state = DiabloState.IDLE;
     private final AnimationManagerDiablo animations = new AnimationManagerDiablo();
     private final MapManager map;
 
@@ -33,14 +33,16 @@ public class Diablo implements Enemy {
     private final EnemyPathFinder pathFinder;
 
     private boolean facingRight = false;
+    private boolean alertStarted = false;
 
-    private float alertTimer = ConstantsDiablo.ALERT_TIMER;
+    private float alertTimer = 0f;
+    private float attackTimer  = 0f;
+    private float hurtTimer  = 0f;
+
     private float alertDuration = ConstantsDiablo.ALERT_DURATION;
-    private boolean alertStarted = ConstantsDiablo.ALERT_STARTED;
-
     private final float attackRange = ConstantsDiablo.ATTACK_RANGE;
     private final float attackCooldown = ConstantsDiablo.ATTACK_COOLDOWN;
-    private float attackTimer  = ConstantsDiablo.ATTACK_TIMER;
+    private final float hurtDuration = ConstantsDiablo.HURT_DURATION;
 
     private float knockbackX = 0f, knockbackY = 0f, knockbackTimer = 0f;
 
@@ -49,7 +51,7 @@ public class Diablo implements Enemy {
         this.y = y;
         this.map = map;
 
-        wander = new EnemyWander(velocidad, 10f, ConstantsDiablo.DETECTED_PLAYER, map, width, height);
+        wander = new EnemyWander(velocidad, ConstantsDiablo.WAIT_TIME, ConstantsDiablo.DETECTED_PLAYER, map, width, height);
         pathFinder = new EnemyPathFinder(map, map.getTileSize());
         vision = new EnemyVision(ConstantsDiablo.DETECTED_PLAYER);
         loadAnimation();
@@ -61,12 +63,14 @@ public class Diablo implements Enemy {
         Texture alert = new Texture("enemy/diablo/diablo_sorprendido.png");
         Texture attack = new Texture("enemy/diablo/diablo_atacando.png");
         Texture hurt = new Texture("enemy/diablo/diablo_herido.png");
+        Texture defeat = new Texture("enemy/diablo/diablo_derrotado.png");
 
         animations.add(DiabloState.IDLE, new Animation<>(0.08f, AnimationLoader.load(idle, 4,3)));
         animations.add(DiabloState.WALK, new Animation<>(0.06f, AnimationLoader.load(walk, 4,3)));
         animations.add(DiabloState.ALERT, new Animation<>(1f, AnimationLoader.load(alert, 1,1)));
         animations.add(DiabloState.ATTACK, new Animation<>(0.05f, AnimationLoader.load(attack, 4,3)));
         animations.add(DiabloState.HURT, new Animation<>(0.05f, AnimationLoader.load(hurt, 3,3)));
+        animations.add(DiabloState.DEFEAT, new Animation<>(0.08f, AnimationLoader.load(defeat, 7,6)));
     }
 
     @Override
@@ -74,19 +78,45 @@ public class Diablo implements Enemy {
         tiempo += delta;
 
         if (vida.isMuerto()){
-            state = DiabloState.DEAD;
+            attackTimer = 0f;
+            alertTimer = 0f;
+            wander.stop();
+            if (state != DiabloState.DEFEAT) {
+                state = DiabloState.DEFEAT;
+                tiempo = 0f;
+            }
             return;
         }
-        previousState = state;
+        DiabloState previousState = state;
 
         if (state == DiabloState.ATTACK) {
             attackTimer += delta;
-            facingRight = player.x > x;
+            updateFacing(player.x - x);
             if (attackTimer >= attackCooldown){
                 state = DiabloState.WALK;
             }
             return;
         }
+
+        if (state == DiabloState.HURT){
+            hurtTimer -= delta;
+            updateFacing(player.x - x);
+            if (knockbackTimer > 0f){
+                knockbackTimer -= delta;
+                float moveX = knockbackX * velocidad * delta;
+                float moveY = knockbackY * velocidad * delta;
+
+                if (!map.isBlocked(x + moveX, y, width, height)) x += moveX;
+                if (!map.isBlocked(x, y + moveY, width, height)) y += moveY;
+            }
+
+            if (hurtTimer <= 0f){
+                state = DiabloState.WALK;
+                hurtTimer = 0f;
+            }
+            return;
+        }
+
         if (vision.isPlayerInRange(x,y, player.x, player.y)){
             if (!alertStarted) {
                 state = DiabloState.ALERT;
@@ -178,7 +208,8 @@ public class Diablo implements Enemy {
         Animation<TextureRegion> anim = animations.get(state);
 
         if (anim != null) {
-            TextureRegion baseFrame = anim.getKeyFrame(tiempo, true);
+            boolean loop = state != DiabloState.DEFEAT;
+            TextureRegion baseFrame = anim.getKeyFrame(tiempo, loop);
             TextureRegion frame = new TextureRegion(baseFrame);
 
             if (facingRight && frame.isFlipX()) frame.flip(true, false);
@@ -196,6 +227,7 @@ public class Diablo implements Enemy {
 
     public boolean isAttackingPlayer(Player player) {
         if (state != DiabloState.ATTACK) return false;
+        if (vida.isMuerto()) return false;
 
         return isPlayerInAttackRange(player);
     }
@@ -217,8 +249,14 @@ public class Diablo implements Enemy {
         float px = player.x;
         float py = player.y;
 
-        float dx = (px + player.getWidth() / 2f) - (x + hitboxWidth / 2f);
-        float dy = (py + player.getHeight() / 2f) - (y + hitboxHeight / 2f);
+        float playerCenterX = px + player.getWidth() / 2f;
+        float playerCenterY = py + player.getHeight() / 2f;
+
+        float diabloCenterX = getHitboxX() + hitboxWidth / 2f;
+        float diabloCenterY = getHitboxY() + hitboxHeight / 2f;
+
+        float dx = playerCenterX - diabloCenterX;
+        float dy = playerCenterY - diabloCenterY;
 
         float dist2 = dx * dx + dy * dy;
 
@@ -234,10 +272,8 @@ public class Diablo implements Enemy {
         float pw = player.getWidth();
         float ph = player.getHeight();
 
-        if (!(px + pw < hx ||
-            px > hx + hitboxWidth ||
-            py + ph < hy ||
-            py > hy + hitboxHeight)) {
+        if (!(px + pw < hx || px > hx + hitboxWidth ||
+            py + ph < hy || py > hy + hitboxHeight)) {
 
             float overlapX = (hx + hitboxWidth / 2f) - (px + pw / 2f);
             float overlapY = (hy + hitboxHeight / 2f) - (py + ph / 2f);
@@ -290,7 +326,19 @@ public class Diablo implements Enemy {
 
     @Override
     public void recibirDolor(int cantidad, float sourceX, float sourceY) {
-
+        if (vida.isMuerto()) return;
+        vida.recibirDolor(cantidad);
+        state = DiabloState.HURT;
+        tiempo = 0f;
+        hurtTimer = hurtDuration;
+        float dx = x - sourceX;
+        float dy = y - sourceY;
+        float dist = (float) Math.sqrt(dx * dx + dy * dy);
+        if (dist != 0){
+            knockbackX = dx / dist;
+            knockbackY = dy / dist;
+            knockbackTimer = ConstantsDiablo.KNOCKBACK_DURATION;
+        }
     }
 
     @Override

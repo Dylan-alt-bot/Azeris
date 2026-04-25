@@ -19,10 +19,10 @@ import ui.projecto.personajes.Player.Player;
 
 public class Amongus implements Enemy {
     private float x, y, tiempo = 0f;
-    private final float width = 25f, height = 25f;
+    private final float width = ConstantsAmongus.WIDTH, height = ConstantsAmongus.HEIGHT;
     private final float velocidad = ConstantsAmongus.VELOCIDAD;
 
-    private final Vida vida = new Vida(80);
+    private final Vida vida = new Vida(ConstantsAmongus.VIDA);
     private AmongusState state = AmongusState.IDLE, previousState = AmongusState.IDLE;
     private final AnimationManagerAmongus animations = new AnimationManagerAmongus();
     private final MapManager map;
@@ -32,16 +32,15 @@ public class Amongus implements Enemy {
     private final EnemyPathFinder pathFinder;
 
     private boolean facingRight = false;
+    private boolean alertStarted = false;
 
     private float attackTimer = 0f;
+    private float alertTimer = 0f;
+    private float hurtTimer = 0f;
+    private float damageTimer = 0f;
+
     private final float attackDuration = ConstantsAmongus.ATTACK_DURATION;
-
     private final float attackRange = ConstantsAmongus.ATTACK_RANGE;
-    private float alertTimer = ConstantsAmongus.ALERT_TIMER;
-    private boolean alertStarted = ConstantsAmongus.ALERT_STARTED;
-
-    private float hurtTimer = ConstantsAmongus.HURT_TIMER;
-    private float damageCooldown = ConstantsAmongus.DAMAGE_COOLDOWN;
 
     private float knockbackX = 0f, knockbackY = 0f, knockbackTimer = 0f;
 
@@ -50,7 +49,7 @@ public class Amongus implements Enemy {
         this.y = y;
         this.map = map;
 
-        wander = new EnemyWander(velocidad, 5f, ConstantsAmongus.DETECTED_PLAYER, map, width, height);
+        wander = new EnemyWander(velocidad, ConstantsAmongus.WAIT_TIMER, ConstantsAmongus.DETECTED_PLAYER, map, width, height);
         pathFinder = new EnemyPathFinder(map, map.getTileSize());
         vision = new EnemyVision(ConstantsAmongus.DETECTED_PLAYER);
         loadAnimation();
@@ -87,7 +86,7 @@ public class Amongus implements Enemy {
             return;
         }
 
-        if (damageCooldown > 0f) damageCooldown -= delta;
+        if (damageTimer > 0f) damageTimer -= delta;
 
         if (state == AmongusState.HURT) {
             hurtTimer -= delta;
@@ -111,7 +110,6 @@ public class Amongus implements Enemy {
                 alertStarted = true;
                 wander.stop();
             }
-
             if (state == AmongusState.ALERT) {
                 alertTimer += delta;
                 facingRight = player.x < x;
@@ -122,10 +120,8 @@ public class Amongus implements Enemy {
                 float dx = player.x - x;
                 float dy = player.y - y;
                 float dist = (float) Math.sqrt(dx * dx + dy * dy);
-
                 if (dist < attackRange) {
                     startAttack();
-
                     return;
                 }
                 Vector2 nextStep = pathFinder.findNextStep(x,y,player.x,player.y);
@@ -133,7 +129,6 @@ public class Amongus implements Enemy {
                     float ndx = nextStep.x - x;
                     float ndy = nextStep.y - y;
                     float length = (float) Math.sqrt(ndx * ndx + ndy * ndy);
-
 
                     if (length != 0) {
                         ndx /= length;
@@ -151,15 +146,12 @@ public class Amongus implements Enemy {
         } else {
             alertStarted = false;
             alertTimer = 0f;
-
             wander.update(delta, x, y);
 
             if (wander.hasTarget()) {
                 float oldX = x;
-
                 x = wander.moveX(x,y,delta);
                 y = wander.moveY(x,y,delta);
-
                 state = AmongusState.RUN;
 
                 if (x < oldX) facingRight = true;
@@ -273,10 +265,9 @@ public class Amongus implements Enemy {
 
     @Override
     public void recibirDolor(int cantidad, float sourceX, float sourceY) {
-
-        if (damageCooldown > 0f || vida.isMuerto()) return;
+        if (damageTimer > 0f || vida.isMuerto()) return;
         vida.recibirDolor(cantidad);
-        damageCooldown = 0.2f;
+        damageTimer = ConstantsAmongus.DAMAGE_COOLDOWN;
 
         float dx = x - sourceX;
         float dy = y - sourceY;
@@ -302,8 +293,8 @@ public class Amongus implements Enemy {
         }
         previousState = state;
         state = AmongusState.HURT;
+        hurtTimer = ConstantsAmongus.HURT_TIMER;
         tiempo = 0f;
-        hurtTimer = 0.3f;
     }
 
     @Override

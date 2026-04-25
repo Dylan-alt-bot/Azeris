@@ -17,10 +17,10 @@ import ui.projecto.personajes.Enemies.Goomba.estado.GoombaState;
 
 public class Goomba implements Enemy {
     private float x, y, tiempo = 0f;
-    private final float width = 16f, height = 16f;
+    private final float width = ConstantsGoomba.WIDTH, height = ConstantsGoomba.HEIGHT;
     private final float velocidad = ConstantsGoomba.VELOCIDAD;
 
-    private final Vida vida = new Vida(30);
+    private final Vida vida = new Vida(ConstantsGoomba.VIDA);
     private GoombaState state = GoombaState.IDLE, previousState = GoombaState.IDLE;
     private final AnimationManagerGoomba animations = new AnimationManagerGoomba();
     private final MapManager map;
@@ -29,11 +29,11 @@ public class Goomba implements Enemy {
     private final EnemyWander wander;
     private final EnemyPathFinder pathFinder;
 
-    private float alertTimer = ConstantsGoomba.ALERT_TIMER;
-    private boolean alertStarted = ConstantsGoomba.ALERT_STARTED;
+    private boolean alertStarted = false;
 
-    private float hurtTimer = ConstantsGoomba.HURT_TIMER;
-    private float damageTimer = ConstantsGoomba.DAMAGE_TIMER;
+    private float alertTimer = 0f;
+    private float hurtTimer = 0f;
+    private float damageTimer = 0f;
 
     private float knockbackX = 0f, knockbackY = 0f, knockbackTimer = 0f;
 
@@ -42,7 +42,7 @@ public class Goomba implements Enemy {
         this.y = y;
         this.map = map;
 
-        wander = new EnemyWander(velocidad, 1f, ConstantsGoomba.DETECTED_PLAYER, map, width, height);
+        wander = new EnemyWander(velocidad, ConstantsGoomba.WAIT_TIMER, ConstantsGoomba.DETECTED_PLAYER, map, width, height);
         pathFinder = new EnemyPathFinder(map, map.getTileSize());
         vision = new EnemyVision(ConstantsGoomba.DETECTED_PLAYER);
         loadAnimation();

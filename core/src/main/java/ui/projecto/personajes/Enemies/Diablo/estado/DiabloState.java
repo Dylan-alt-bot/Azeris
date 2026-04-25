@@ -6,5 +6,5 @@ public enum DiabloState {
     ALERT,
     ATTACK,
     HURT,
-    DEAD
+    DEFEAT
 }
