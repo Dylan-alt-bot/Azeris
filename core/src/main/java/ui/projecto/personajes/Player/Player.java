@@ -94,6 +94,10 @@ public class Player{
         }
 
         if (vida.isMuerto()){
+            if (state != PlayerState.DEAD){
+                audio.triggerDeath();
+                audio.stopRun();
+            }
             state = PlayerState.DEAD;
             knockbackTimer = 0f;
             if (Gdx.input.isKeyJustPressed(Input.Keys.R)){
@@ -158,6 +162,7 @@ public class Player{
         if (state != PlayerState.HURT){
             if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && !sprintCooldown && state != PlayerState.ATTACK){
                 if (state != PlayerState.SPRINT){
+                    audio.playSprint();
                     state = PlayerState.SPRINT;
                     velocidad = velocidadBase * (ConstantsPlayer.VELOCIDAD_SPRINT / ConstantsPlayer.VELOCIDAD);
                     sprintTimer = 0;
@@ -187,6 +192,7 @@ public class Player{
 
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)){
             if (state != PlayerState.ATTACK && state != PlayerState.SPRINT) {
+                audio.playAttack();
                 sprintImpulseRemaining = 0;
 
                 state = PlayerState.ATTACK;
@@ -221,9 +227,9 @@ public class Player{
             state = moving ? PlayerState.RUN : PlayerState.IDLE;
         }
 
-        boolean isRunningNow = (state == PlayerState.RUN) && moving && knockbackTimer <= 0f;
+        boolean isRunningNow = !vida.isMuerto() && (state == PlayerState.RUN) && moving && knockbackTimer <= 0f;
         if (isRunningNow && !wasRunning){
-            audio.startRun();
+            audio.playRun();
         }
         if (!isRunningNow && wasRunning){
             audio.stopRun();
@@ -305,6 +311,8 @@ public class Player{
 
     public void recibirDolor(int cantidad, float enemyX, float enemyY){
         if (damageCooldownTimer <= 0f && !vida.isMuerto()) {
+            audio.stopRun();
+            audio.playHurt();
             vida.recibirDolor(cantidad);
 
             previousState = state;
@@ -349,6 +357,7 @@ public class Player{
     }
 
     public void revivir(){
+        audio.reset();
         vida.revivir();
         x = spawnX;
         y = spawnY;
@@ -362,6 +371,7 @@ public class Player{
         attackTimer = 0f;
         hurtTimer = 0f;
         damageCooldownTimer = 0f;
+        wasRunning = false;
     }
 
     public Vida getVida(){
