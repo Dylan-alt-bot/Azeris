@@ -14,33 +14,31 @@ public class PlayerAudioManager {
     private long deathId = -1;
     private boolean running = false;
 
-
     public PlayerAudioManager() {
         run = Gdx.audio.newSound(Gdx.files.internal("audio/sfx/player/run.wav"));
         attack = Gdx.audio.newSound(Gdx.files.internal("audio/sfx/player/attack.wav"));
         sprint = Gdx.audio.newSound(Gdx.files.internal("audio/sfx/player/sprint.wav"));
         hurt = Gdx.audio.newSound(Gdx.files.internal("audio/sfx/player/hurt.wav"));
         dead = Gdx.audio.newSound(Gdx.files.internal("audio/sfx/player/dead.wav"));
-        // Implementar más tarde
     }
 
     public void playRun(){
         if (running) return;
-        runId = run.play(0.9f);
+        runId = run.play(0.7f);
         run.setLooping(runId, true);
         running = true;
     }
 
     public void playAttack(){
-        attack.play(0.7f);
+        attack.play(0.3f);
     }
 
     public void playSprint(){
-        sprint.play(0.6f);
+        sprint.play(0.3f);
     }
 
     public void playHurt(){
-        hurt.play(0.7f);
+        hurt.play(0.6f);
     }
 
     public void stopRun(){
@@ -50,23 +48,23 @@ public class PlayerAudioManager {
         running = false;
     }
 
-    public void dispose(){
-        run.dispose();
-        attack.dispose();
-        sprint.dispose();
-        hurt.dispose();
-        dead.dispose();
-    }
-
     public void triggerDeath(){
         stopRun();
         dead.stop();
-        deathId = dead.play(0.8f);
+        deathId = dead.play(0.3f);
     }
 
     public void reset(){
         stopRun();
         dead.stop();
         deathId = -1;
+    }
+
+    public void dispose(){
+        run.dispose();
+        attack.dispose();
+        sprint.dispose();
+        hurt.dispose();
+        dead.dispose();
     }
 }

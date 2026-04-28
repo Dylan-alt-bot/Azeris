@@ -12,9 +12,10 @@ import ui.projecto.mecanicas.Enemies.EnemyVision;
 import ui.projecto.mecanicas.Enemies.EnemyWander;
 import ui.projecto.mecanicas.MapManager;
 import ui.projecto.mecanicas.Vida;
-import ui.projecto.personajes.Enemies.Amongus.animacion.AnimationManagerAmongus;
-import ui.projecto.personajes.Enemies.Amongus.estado.AmongusState;
-import ui.projecto.personajes.Enemies.Amongus.util.ConstantsAmongus;
+import ui.projecto.personajes.Enemies.Amongus.Manager.AmongusAudioManager;
+import ui.projecto.personajes.Enemies.Amongus.Manager.AnimationManagerAmongus;
+import ui.projecto.personajes.Enemies.Amongus.State.AmongusState;
+import ui.projecto.personajes.Enemies.Amongus.Util.ConstantsAmongus;
 import ui.projecto.personajes.Player.Player;
 
 public class Amongus implements Enemy {
@@ -25,6 +26,7 @@ public class Amongus implements Enemy {
     private final Vida vida = new Vida(ConstantsAmongus.VIDA);
     private AmongusState state = AmongusState.IDLE, previousState = AmongusState.IDLE;
     private final AnimationManagerAmongus animations = new AnimationManagerAmongus();
+    private final AmongusAudioManager audio = new AmongusAudioManager();
     private final MapManager map;
 
     private final EnemyVision vision;
@@ -82,6 +84,10 @@ public class Amongus implements Enemy {
         tiempo += delta;
 
         if (vida.isMuerto()){
+            if (state != AmongusState.DEAD) {
+                audio.stopRun();
+                audio.playDead();
+            }
             state = AmongusState.DEAD;
             return;
         }
@@ -92,6 +98,7 @@ public class Amongus implements Enemy {
             hurtTimer -= delta;
             if (hurtTimer <= 0f) {
                 state = AmongusState.RUN;
+                audio.playRun();
             }
         }
 
@@ -105,6 +112,8 @@ public class Amongus implements Enemy {
 
         if (vision.isPlayerInRange(x,y, player.x, player.y)) {
             if (!alertStarted) {
+                audio.stopRun();
+                audio.playAlert();
                 state = AmongusState.ALERT;
                 alertTimer = 0f;
                 alertStarted = true;
@@ -115,8 +124,10 @@ public class Amongus implements Enemy {
                 facingRight = player.x < x;
                 if (alertTimer >= ConstantsAmongus.ALERT_DURATION){
                     state = AmongusState.RUN;
+                    audio.playRun();
                 }
             } else if (state == AmongusState.RUN) {
+                audio.playRun();
                 float dx = player.x - x;
                 float dy = player.y - y;
                 float dist = (float) Math.sqrt(dx * dx + dy * dy);
@@ -152,6 +163,7 @@ public class Amongus implements Enemy {
                 float oldX = x;
                 x = wander.moveX(x,y,delta);
                 y = wander.moveY(x,y,delta);
+                audio.playRun();
                 state = AmongusState.RUN;
 
                 if (x < oldX) facingRight = true;
@@ -162,6 +174,7 @@ public class Amongus implements Enemy {
                     state = AmongusState.IDLE;
                 }
             } else {
+                audio.stopRun();
                 state = AmongusState.IDLE;
             }
         }
@@ -216,18 +229,22 @@ public class Amongus implements Enemy {
     }
 
     private void startAttack() {
+        audio.stopRun();
         int r = (int) (Math.random() * 3);
         switch (r) {
             case 1:{
                 state = AmongusState.ATTACK_2;
+                audio.playAttack2();
                 break;
             }
             case 2:{
                 state = AmongusState.ATTACK_3;
+                audio.playAttack3();
                 break;
             }
             default:{
                 state = AmongusState.ATTACK_1;
+                audio.playAttack1();
                 break;
             }
         }
@@ -287,10 +304,14 @@ public class Amongus implements Enemy {
         facingRight = dx > 0;
 
         if (vida.isMuerto()) {
+            audio.stopRun();
+            audio.playDead();
             state = AmongusState.DEAD;
             tiempo = 0f;
             return;
         }
+        audio.stopRun();
+        audio.playHurt();
         previousState = state;
         state = AmongusState.HURT;
         hurtTimer = ConstantsAmongus.HURT_TIMER;

@@ -17,17 +17,17 @@ import ui.projecto.mecanicas.utils.Azeris;
 import ui.projecto.mecanicas.utils.Heart;
 import ui.projecto.mecanicas.utils.Utils;
 import ui.projecto.personajes.Enemies.Amongus.Amongus;
-import ui.projecto.personajes.Enemies.Amongus.util.ConstantsAmongus;
+import ui.projecto.personajes.Enemies.Amongus.Util.ConstantsAmongus;
 import ui.projecto.personajes.Enemies.Diablo.Diablo;
-import ui.projecto.personajes.Enemies.Diablo.util.ConstantsDiablo;
+import ui.projecto.personajes.Enemies.Diablo.Util.ConstantsDiablo;
 import ui.projecto.personajes.Enemies.Goomba.Goomba;
-import ui.projecto.personajes.Enemies.Goomba.util.ConstantsGoomba;
+import ui.projecto.personajes.Enemies.Goomba.Util.ConstantsGoomba;
 import ui.projecto.personajes.Enemies.Skeleton.Skeleton;
-import ui.projecto.personajes.Enemies.Skeleton.util.ConstantsSkeleton;
+import ui.projecto.personajes.Enemies.Skeleton.Util.ConstantsSkeleton;
 import ui.projecto.personajes.Player.Player;
 import ui.projecto.personajes.Player.PlayerUI;
-import ui.projecto.personajes.Player.estado.PlayerState;
-import ui.projecto.personajes.Player.util.ConstantsPlayer;
+import ui.projecto.personajes.Player.State.PlayerState;
+import ui.projecto.personajes.Player.Util.ConstantsPlayer;
 
 import java.util.*;
 
@@ -69,7 +69,7 @@ public class Main extends ApplicationAdapter {
         uiCamera = new OrthographicCamera();
         uiCamera.setToOrtho(false, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
 
-        mapManager = new MapManager("maps/beta/mapabase.tmx");
+        mapManager = new MapManager("maps/beta/finalboss.tmx");
         playerSpawn = mapManager.getRandomPlayerSpawn();
         jugadorPrincipal = new Player(playerSpawn.x, playerSpawn.y, mapManager);
         playerUI = new PlayerUI(jugadorPrincipal);

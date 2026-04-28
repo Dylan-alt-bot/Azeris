@@ -12,9 +12,10 @@ import ui.projecto.mecanicas.Enemies.EnemyVision;
 import ui.projecto.mecanicas.Enemies.EnemyWander;
 import ui.projecto.mecanicas.MapManager;
 import ui.projecto.mecanicas.Vida;
-import ui.projecto.personajes.Enemies.Diablo.animacion.AnimationManagerDiablo;
-import ui.projecto.personajes.Enemies.Diablo.estado.DiabloState;
-import ui.projecto.personajes.Enemies.Diablo.util.ConstantsDiablo;
+import ui.projecto.personajes.Enemies.Diablo.Manager.AnimationManagerDiablo;
+import ui.projecto.personajes.Enemies.Diablo.Manager.DiabloAudioManager;
+import ui.projecto.personajes.Enemies.Diablo.State.DiabloState;
+import ui.projecto.personajes.Enemies.Diablo.Util.ConstantsDiablo;
 import ui.projecto.personajes.Player.Player;
 
 public class Diablo implements Enemy {
@@ -26,6 +27,7 @@ public class Diablo implements Enemy {
     private final Vida vida = new Vida(ConstantsDiablo.VIDA);
     private DiabloState state = DiabloState.IDLE;
     private final AnimationManagerDiablo animations = new AnimationManagerDiablo();
+    private final DiabloAudioManager audio = new DiabloAudioManager();
     private final MapManager map;
 
     private final EnemyVision vision;
@@ -82,6 +84,7 @@ public class Diablo implements Enemy {
             alertTimer = 0f;
             wander.stop();
             if (state != DiabloState.DEFEAT) {
+                audio.playDefeat();
                 state = DiabloState.DEFEAT;
                 tiempo = 0f;
             }
@@ -112,6 +115,7 @@ public class Diablo implements Enemy {
 
             if (hurtTimer <= 0f){
                 state = DiabloState.WALK;
+                audio.playWalk();
                 hurtTimer = 0f;
             }
             return;
@@ -119,6 +123,8 @@ public class Diablo implements Enemy {
 
         if (vision.isPlayerInRange(x,y, player.x, player.y)){
             if (!alertStarted) {
+                audio.stopMovementAudio();
+                audio.playAlert();
                 state = DiabloState.ALERT;
                 alertTimer = 0f;
                 alertStarted = true;
@@ -129,10 +135,12 @@ public class Diablo implements Enemy {
                 updateFacing(player.x - x);
                 if (alertTimer >= ConstantsDiablo.ALERT_DURATION){
                     state = DiabloState.WALK;
+                    audio.playWalk();
                 }
                 return;
             }
             if (state == DiabloState.WALK) {
+                audio.playWalk();
                 Vector2 nextStep = pathFinder.findNextStep(x, y, player.x, player.y);
                 float oldX = x;
                 float oldY = y;
@@ -154,6 +162,8 @@ public class Diablo implements Enemy {
                         }
                     }
                     if (isPlayerInAttackRange(player)){
+                        audio.stopWalk();
+                        audio.playAttack();
                         state = DiabloState.ATTACK;
                         attackTimer = 0f;
                     }
@@ -167,22 +177,20 @@ public class Diablo implements Enemy {
             if (!wander.hasTarget()){
                 wander.update(delta, x, y);
             }
-
             if (wander.hasTarget()){
+                audio.playWalk();
                 state = DiabloState.WALK;
 
                 float oldX = x;
-
                 x = wander.moveX(x,y,delta);
                 y = wander.moveY(x,y,delta);
-
                 updateFacing(x - oldX);
-
                 if (wander.reachedTarget(x,y)){
                     wander.stop();
                     state = DiabloState.IDLE;
                 }
             } else {
+                audio.playIdle();
                 state = DiabloState.IDLE;
             }
             resolvePlayerCollision(player);
@@ -328,6 +336,8 @@ public class Diablo implements Enemy {
     public void recibirDolor(int cantidad, float sourceX, float sourceY) {
         if (vida.isMuerto()) return;
         vida.recibirDolor(cantidad);
+        audio.stopMovementAudio();
+        audio.playHurt();
         state = DiabloState.HURT;
         tiempo = 0f;
         hurtTimer = hurtDuration;

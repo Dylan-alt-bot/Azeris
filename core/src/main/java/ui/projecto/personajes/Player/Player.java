@@ -11,9 +11,9 @@ import ui.projecto.mecanicas.Vida;
 import ui.projecto.mecanicas.AnimationLoader;
 import ui.projecto.personajes.Player.Manager.AnimationManager;
 import ui.projecto.personajes.Player.Manager.PlayerAudioManager;
-import ui.projecto.personajes.Player.estado.PlayerState;
-import ui.projecto.personajes.Player.render.PlayerRenderer;
-import ui.projecto.personajes.Player.util.ConstantsPlayer;
+import ui.projecto.personajes.Player.State.PlayerState;
+import ui.projecto.personajes.Player.Render.PlayerRenderer;
+import ui.projecto.personajes.Player.Util.ConstantsPlayer;
 
 import java.util.List;
 

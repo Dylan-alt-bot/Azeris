@@ -10,10 +10,12 @@ import ui.projecto.mecanicas.Enemies.Enemy;
 import ui.projecto.mecanicas.Enemies.EnemyPathFinder;
 import ui.projecto.mecanicas.Enemies.EnemyVision;
 import ui.projecto.mecanicas.Enemies.EnemyWander;
-import ui.projecto.personajes.Enemies.Goomba.util.ConstantsGoomba;
+import ui.projecto.personajes.Enemies.Goomba.Manager.GoombaAudioManager;
+import ui.projecto.personajes.Enemies.Goomba.Util.ConstantsGoomba;
 import ui.projecto.personajes.Player.Player;
-import ui.projecto.personajes.Enemies.Goomba.animacion.AnimationManagerGoomba;
-import ui.projecto.personajes.Enemies.Goomba.estado.GoombaState;
+import ui.projecto.personajes.Enemies.Goomba.Manager.AnimationManagerGoomba;
+import ui.projecto.personajes.Enemies.Goomba.State.GoombaState;
+import ui.projecto.personajes.Player.State.PlayerState;
 
 public class Goomba implements Enemy {
     private float x, y, tiempo = 0f;
@@ -23,6 +25,7 @@ public class Goomba implements Enemy {
     private final Vida vida = new Vida(ConstantsGoomba.VIDA);
     private GoombaState state = GoombaState.IDLE, previousState = GoombaState.IDLE;
     private final AnimationManagerGoomba animations = new AnimationManagerGoomba();
+    private final GoombaAudioManager audio = new GoombaAudioManager();
     private final MapManager map;
 
     private final EnemyVision vision;
@@ -67,6 +70,10 @@ public class Goomba implements Enemy {
         tiempo += delta;
 
         if (vida.isMuerto()){
+            if (state != GoombaState.DEAD){
+                audio.stopRun();
+                audio.playDeath();
+            }
             state = GoombaState.DEAD;
             return;
         }
@@ -81,9 +88,11 @@ public class Goomba implements Enemy {
                 state = GoombaState.RUN;
                 alertStarted = true;
             }
+            audio.playRun();
         }
         if (vision.isPlayerInRange(x, y, player.x, player.y)) {
             if (!alertStarted){
+                audio.playAlert();
                 state = GoombaState.ALERT;
                 alertTimer = 0f;
                 alertStarted = true;
@@ -93,6 +102,7 @@ public class Goomba implements Enemy {
                 alertTimer += delta;
                 if (alertTimer >= ConstantsGoomba.ALERT_DURATION){
                     state = GoombaState.RUN;
+                    audio.playRun();
                 }
             } else if (state == GoombaState.RUN) {
                 Vector2 nextStep = pathFinder.findNextStep(x, y, player.x, player.y);
@@ -142,6 +152,9 @@ public class Goomba implements Enemy {
             alertStarted = false;
             wander.update(delta, x, y);
             if (wander.hasTarget()) {
+                if (state == GoombaState.RUN){
+                    audio.playRun();
+                }
                 state = GoombaState.RUN;
                 x = wander.moveX(x, y, delta);
                 y = wander.moveY(x, y, delta);
@@ -150,6 +163,7 @@ public class Goomba implements Enemy {
                     state = GoombaState.IDLE;
                 }
             } else {
+                audio.stopRun();
                 state = GoombaState.IDLE;
             }
         }
@@ -168,7 +182,6 @@ public class Goomba implements Enemy {
             }
             return;
         }
-
         if (state != previousState) {
             tiempo = 0f;
             previousState = state;
@@ -209,10 +222,14 @@ public class Goomba implements Enemy {
         knockbackTimer = ConstantsGoomba.KNOCKBACK_DURATION;
 
         if (vida.isMuerto()){
+            audio.stopRun();
+            audio.playDeath();
             state = GoombaState.DEAD;
             tiempo = 0f;
             return;
         }
+        audio.stopRun();
+        audio.playHit();
         previousState = state;
         state = GoombaState.HURT;
         hurtTimer = ConstantsGoomba.DURACION_HURT;

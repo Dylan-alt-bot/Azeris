@@ -2,7 +2,7 @@ package ui.projecto.personajes.Player.Manager;
 
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import ui.projecto.personajes.Player.estado.PlayerState;
+import ui.projecto.personajes.Player.State.PlayerState;
 
 import java.util.HashMap;
 

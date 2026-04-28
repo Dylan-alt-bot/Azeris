@@ -10,9 +10,10 @@ import ui.projecto.mecanicas.Enemies.Enemy;
 import ui.projecto.mecanicas.Enemies.EnemyPathFinder;
 import ui.projecto.mecanicas.Enemies.EnemyVision;
 import ui.projecto.mecanicas.Enemies.EnemyWander;
-import ui.projecto.personajes.Enemies.Skeleton.animacion.AnimationManagerSkeleton;
-import ui.projecto.personajes.Enemies.Skeleton.estado.SkeletonState;
-import ui.projecto.personajes.Enemies.Skeleton.util.ConstantsSkeleton;
+import ui.projecto.personajes.Enemies.Skeleton.Manager.AnimationManagerSkeleton;
+import ui.projecto.personajes.Enemies.Skeleton.Manager.SkeletonAudioManager;
+import ui.projecto.personajes.Enemies.Skeleton.State.SkeletonState;
+import ui.projecto.personajes.Enemies.Skeleton.Util.ConstantsSkeleton;
 import ui.projecto.personajes.Player.Player;
 
 public class Skeleton implements Enemy {
@@ -23,6 +24,7 @@ public class Skeleton implements Enemy {
     private final Vida vida = new Vida(ConstantsSkeleton.VIDA);
     private SkeletonState state = SkeletonState.IDLE, previousState = SkeletonState.IDLE;
     private final AnimationManagerSkeleton animations = new AnimationManagerSkeleton();
+    private final SkeletonAudioManager audio = new SkeletonAudioManager();
     private final MapManager map;
 
     private final EnemyVision vision;
@@ -76,6 +78,11 @@ public class Skeleton implements Enemy {
         tiempo += delta;
 
         if (vida.isMuerto()) {
+            if (state != SkeletonState.DEAD) {
+                audio.stopRun();
+                audio.playDeath();
+                tiempo = 0f;
+            }
             state = SkeletonState.DEAD;
             return;
         }
@@ -87,6 +94,7 @@ public class Skeleton implements Enemy {
             hurtTimer -= delta;
             if (hurtTimer <= 0f) {
                 state = SkeletonState.RUN;
+                audio.playRun();
             }
         }
 
@@ -109,6 +117,8 @@ public class Skeleton implements Enemy {
 
         if (vision.isPlayerInRange(x, y, player.x, player.y)) {
             if (!alertStarted) {
+                audio.stopRun();
+                audio.playAlert();
                 state = SkeletonState.ALERT;
                 alertTimer = 0f;
                 alertStarted = true;
@@ -118,8 +128,10 @@ public class Skeleton implements Enemy {
                 alertTimer += delta;
                 if (alertTimer >= ConstantsSkeleton.ALERT_DURATION) {
                     state = SkeletonState.RUN;
+                    audio.playRun();
                 }
             } else if (state == SkeletonState.RUN) {
+                audio.playRun();
                 Vector2 nextStep = pathFinder.findNextStep(x, y, player.x, player.y);
                 float oldX = x;
                 float dx = player.x - x;
@@ -127,6 +139,7 @@ public class Skeleton implements Enemy {
                 float distToPlayer = (float) Math.sqrt(dx * dx + dy * dy);
 
                 if (distToPlayer < attackRange) {
+                    audio.playAttack();
                     state = SkeletonState.ATTACK;
                     if (distToPlayer > 0) {
                         float moveX = dx / distToPlayer * velocidad * delta;
@@ -155,6 +168,10 @@ public class Skeleton implements Enemy {
             alertTimer = 0f;
             wander.update(delta, x, y);
             if (wander.hasTarget()) {
+                if (state != SkeletonState.WALK) {
+                    audio.stopRun();
+                    audio.playWalk();
+                }
                 state = SkeletonState.WALK;
                 float oldX = x;
                 x = wander.moveX(x, y, delta);
@@ -172,19 +189,17 @@ public class Skeleton implements Enemy {
                 }
 
             } else {
+                audio.stopRun();
                 state = SkeletonState.IDLE;
             }
         }
 
         if (knockbackTimer > 0f) {
             knockbackTimer -= delta;
-
             float moveX = knockbackX * delta;
             float moveY = knockbackY * delta;
-
             if (!map.isBlocked(x + moveX, y, width, height)) x += moveX;
             if (!map.isBlocked(x, y + moveY, width, height)) y += moveY;
-
             return;
         }
 
@@ -256,6 +271,8 @@ public class Skeleton implements Enemy {
     public void recibirDolor(int cantidad, float sourceX, float sourceY) {
         if (damageTimer > 0f) return;
         vida.recibirDolor(cantidad);
+        audio.stopRun();
+        audio.playHurt();
         damageTimer = 0.15f;
 
         float dx = x - sourceX;
@@ -270,6 +287,8 @@ public class Skeleton implements Enemy {
         }
         facingRight = dx > 0;
         if (vida.isMuerto()){
+            audio.stopRun();
+            audio.playDeath();
             state = SkeletonState.DEAD;
             tiempo = 0f;
             return;
