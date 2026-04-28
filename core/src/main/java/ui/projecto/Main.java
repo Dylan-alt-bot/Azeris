@@ -69,7 +69,7 @@ public class Main extends ApplicationAdapter {
         uiCamera = new OrthographicCamera();
         uiCamera.setToOrtho(false, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
 
-        mapManager = new MapManager("maps/beta/finalboss.tmx");
+        mapManager = new MapManager("maps/beta/mapabase.tmx");
         playerSpawn = mapManager.getRandomPlayerSpawn();
         jugadorPrincipal = new Player(playerSpawn.x, playerSpawn.y, mapManager);
         playerUI = new PlayerUI(jugadorPrincipal);
@@ -253,13 +253,16 @@ public class Main extends ApplicationAdapter {
     }
 
     private void resetEnemies(){
+        for (Enemy enemy : enemies){
+            enemy.stopAllSounds();
+        }
         enemies.clear();
+        countEnemies.clear();
+        enemiesKilled = 0;
         for (EnemySpawn spawn : initialEnemySpawns){
             Enemy enemy = createEnemy(spawn);
             if (enemy != null) enemies.add(enemy);
         }
-        enemiesKilled = 0;
-        countEnemies.clear();
     }
 
     private void resetUtils(){

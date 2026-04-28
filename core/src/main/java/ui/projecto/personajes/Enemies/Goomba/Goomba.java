@@ -255,4 +255,8 @@ public class Goomba implements Enemy {
     public boolean collides(float px, float py, float pw, float ph) {
         return !(px + pw < x || px > x + width || py + ph < y || py > y + height);
     }
+    @Override
+    public void stopAllSounds() {
+        audio.stopRun();
+    }
 }

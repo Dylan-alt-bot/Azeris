@@ -322,4 +322,9 @@ public class Amongus implements Enemy {
     public boolean isDead() {
         return vida.isMuerto();
     }
+
+    @Override
+    public void stopAllSounds() {
+        audio.stopRun();
+    }
 }

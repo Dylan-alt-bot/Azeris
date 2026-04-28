@@ -25,6 +25,7 @@ public class SkeletonAudioManager {
 
     public void playWalk() {
         if (running) return;
+        stopRun();
         runId = walk.play(0.1f);
         walk.setLooping(runId, true);
         running = true;

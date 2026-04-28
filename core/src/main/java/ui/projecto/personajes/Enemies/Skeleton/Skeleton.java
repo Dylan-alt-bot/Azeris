@@ -86,6 +86,9 @@ public class Skeleton implements Enemy {
             state = SkeletonState.DEAD;
             return;
         }
+        if (state == SkeletonState.DEAD) {
+            audio.dispose();
+        }
 
         if (damageTimer > 0f) damageTimer -= delta;
 
@@ -301,5 +304,10 @@ public class Skeleton implements Enemy {
     @Override
     public boolean isDead() {
         return vida.isMuerto();
+    }
+
+    @Override
+    public void stopAllSounds() {
+        audio.stopRun();
     }
 }

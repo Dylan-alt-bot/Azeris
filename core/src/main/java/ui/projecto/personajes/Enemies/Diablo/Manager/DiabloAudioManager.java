@@ -30,6 +30,7 @@ public class DiabloAudioManager {
         if (idling) return;
         stopWalk();
         idleId = idle.play(0.2f);
+        idle.setPitch(idleId, 1.3f);
         idle.setLooping(idleId, true);
         idling = true;
     }
@@ -45,6 +46,7 @@ public class DiabloAudioManager {
         if (walking) return;
         stopIdle();
         walkId = walk.play(0.3f);
+        walk.setPitch(walkId, 1.5f);
         walk.setLooping(walkId, true);
         walking = true;
     }

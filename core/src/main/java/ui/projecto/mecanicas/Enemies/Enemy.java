@@ -13,4 +13,5 @@ public interface Enemy {
     void render(com.badlogic.gdx.graphics.g2d.SpriteBatch batch);
     void recibirDolor(int cantidad, float sourceX, float sourceY);
     boolean isDead();
+    void stopAllSounds();
 }

@@ -356,6 +356,12 @@ public class Diablo implements Enemy {
         return vida.isMuerto();
     }
 
+    @Override
+    public void stopAllSounds() {
+        audio.stopIdle();
+        audio.stopWalk();
+    }
+
     private float getHitboxX() {
         return x + (width - hitboxWidth) / 2f;
     }
