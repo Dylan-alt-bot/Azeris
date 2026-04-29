@@ -57,4 +57,8 @@ public class Heart implements Utils{
     public void dispose() {
         collectSound.dispose();
     }
+
+    @Override
+    public void stopAllSounds() {
+    }
 }

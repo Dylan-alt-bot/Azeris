@@ -29,6 +29,13 @@ public class PlayerAudioManager {
         running = true;
     }
 
+    public void stopRun(){
+        if (!running) return;
+        run.stop(runId);
+        runId = -1;
+        running = false;
+    }
+
     public void playAttack(){
         attack.play(0.3f);
     }
@@ -39,13 +46,6 @@ public class PlayerAudioManager {
 
     public void playHurt(){
         hurt.play(0.6f);
-    }
-
-    public void stopRun(){
-        if (!running) return;
-        run.stop(runId);
-        runId = -1;
-        running = false;
     }
 
     public void triggerDeath(){
@@ -66,5 +66,13 @@ public class PlayerAudioManager {
         sprint.dispose();
         hurt.dispose();
         dead.dispose();
+    }
+
+    public void stopAllSounds(){
+        run.stop();
+        attack.stop();
+        sprint.stop();
+        hurt.stop();
+        dead.stop();
     }
 }

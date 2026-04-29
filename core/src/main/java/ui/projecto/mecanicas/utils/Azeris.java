@@ -12,7 +12,7 @@ public class Azeris implements Utils{
     private final float x, y;
     private final float width = 21f, height = 21f;
     private final Animation<TextureRegion> anim;
-    private final Sound ambientSound;
+    private final Sound ambient;
     private final Sound collectSound;
     private long ambientId = -1;
     private float tiempo = 0f;
@@ -25,9 +25,9 @@ public class Azeris implements Utils{
 
         Texture azeris = new Texture("utils/azeris.png");
         this.anim = new Animation<>(0.05f, AnimationLoader.load(azeris, 6,5));
-        ambientSound = Gdx.audio.newSound(Gdx.files.internal("audio/sfx/util/azeris/azerisIdle.wav"));
+        ambient = Gdx.audio.newSound(Gdx.files.internal("audio/sfx/util/azeris/azerisIdle.wav"));
         collectSound = Gdx.audio.newSound(Gdx.files.internal("audio/sfx/util/azeris/azerisCollect.wav"));
-        ambientId = ambientSound.loop(0.01f);
+        ambientId = ambient.loop(0.01f);
     }
 
     public void update(float delta){
@@ -50,7 +50,7 @@ public class Azeris implements Utils{
         if (collected) return;
         collected = true;
         if (ambientId != -1){
-            ambientSound.stop(ambientId);
+            ambient.stop(ambientId);
             ambientId = -1;
         }
         collectSound.play(0.08f);
@@ -62,10 +62,18 @@ public class Azeris implements Utils{
 
     public void dispose(){
         if (ambientId != -1) {
-            ambientSound.stop(ambientId);
+            ambient.stop(ambientId);
         }
 
-        ambientSound.dispose();
+        ambient.dispose();
         collectSound.dispose();
+    }
+
+    @Override
+    public void stopAllSounds() {
+        if (ambientId != -1) {
+            ambient.stop(ambientId);
+            ambientId = -1;
+        }
     }
 }

@@ -409,4 +409,8 @@ public class Player{
         System.out.println("  Daño x" + ConstantsPlayer.AZERIS_DAMAGE);
         System.out.println("  Velocidad x" + ConstantsPlayer.AZERIS_SPEED);
     }
+    public void stopAllSounds(){
+        audio.stopRun();
+        wasRunning = false;
+    }
 }

@@ -3,6 +3,7 @@ package ui.projecto;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.*;
@@ -41,6 +42,7 @@ public class Main extends ApplicationAdapter {
     private OrthographicCamera camera;
     private OrthographicCamera uiCamera;
     private BitmapFont font;
+    private Music bgMusic;
 
     private Vector2 playerSpawn;
     private PlayerUI playerUI;
@@ -54,6 +56,7 @@ public class Main extends ApplicationAdapter {
     private int enemiesKilled = 0;
     private final Set<Enemy> countEnemies = new HashSet<>();
 
+    private boolean gamePaused = false;
     private boolean fullscreen = false;
 
     @Override
@@ -96,10 +99,32 @@ public class Main extends ApplicationAdapter {
         }
         this.glProfiler = new GLProfiler(Gdx.graphics);
         this.glProfiler.enable();
+
+        bgMusic = Gdx.audio.newMusic(Gdx.files.internal("audio/music/musicIssac.mp3"));
+        bgMusic.setVolume(0.23f);
+        bgMusic.setLooping(true);
+        bgMusic.play();
     }
 
     @Override
     public void render() {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            gamePaused = !gamePaused;
+            if (gamePaused) {
+                if (bgMusic != null) bgMusic.pause();
+                for (Enemy enemy : enemies) enemy.stopAllSounds();
+            } else {
+                if (bgMusic != null) bgMusic.stop();
+            }
+        }
+        if (gamePaused) {
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            batch.setProjectionMatrix(uiCamera.combined);
+            batch.begin();
+            font.draw(batch, "JUEGO EN PAUSA",  330f, 240f);
+            batch.end();
+            return;
+        }
         if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) toggleFullscreen();
 
         float deltaTime = Gdx.graphics.getDeltaTime();
@@ -207,12 +232,15 @@ public class Main extends ApplicationAdapter {
         }
 
         if (jugadorPrincipal.getVida().isMuerto()) {
+            bgMusic.setVolume(0.08f);
             String mensaje = "¡Has muerto! Presiona R para revivir";
 
             GlyphLayout layout = new GlyphLayout(font, mensaje);
             float x = (ConstantsPlayer.VIRTUAL_WIDTH - layout.width) / 2;
             float y = (ConstantsPlayer.VIRTUAL_HEIGHT - layout.height) / 2 + 50;
             font.draw(batch, layout, x, y);
+        } else {
+            bgMusic.setVolume(0.23f);
         }
         batch.end();
         playerUI.render(batch);
@@ -235,6 +263,10 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void dispose() {
+        if (bgMusic != null) {
+            bgMusic.stop();
+            bgMusic.dispose();
+        }
         batch.dispose();
         glProfiler.disable();
         playerUI.dispose();
@@ -276,5 +308,22 @@ public class Main extends ApplicationAdapter {
         if (azerisSpawn != null){
             utils.add(new Azeris(azerisSpawn.x, azerisSpawn.y));
         }
+    }
+
+    @Override
+    public void pause() {
+        if (bgMusic != null) bgMusic.pause();
+        for (Enemy enemy : enemies) {
+            enemy.stopAllSounds();
+        }
+        for (Utils u : utils) {
+            u.stopAllSounds();
+        }
+        jugadorPrincipal.stopAllSounds();
+    }
+
+    @Override
+    public void resume() {
+        if (bgMusic != null) bgMusic.play();
     }
 }

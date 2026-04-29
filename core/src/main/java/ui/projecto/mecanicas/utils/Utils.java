@@ -8,4 +8,5 @@ public interface Utils {
     boolean isCollected();
     void collect();
     boolean collides(float px, float py, float w, float h);
+    void stopAllSounds();
 }
