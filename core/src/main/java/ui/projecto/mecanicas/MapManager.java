@@ -25,6 +25,7 @@ public class MapManager {
     private final List<EnemySpawn> enemySpawns;
     private final List<Vector2> hearthSpawns;
     private final List<Vector2> azerisSpawns;
+    private final List<Vector2> doorSpawns;
 
     private final int tileSize;
 
@@ -89,6 +90,23 @@ public class MapManager {
                         break;
                 }
             }
+        }
+
+        doorSpawns = new ArrayList<>();
+        MapLayer rawDoorLayer = roomGroupLayer.getLayers().get("Puertas");
+        if (rawDoorLayer instanceof TiledMapTileLayer) {
+            TiledMapTileLayer doorLayer = (TiledMapTileLayer) rawDoorLayer;
+            for (int x = 0; x < doorLayer.getWidth(); x++) {
+                for (int y = 0; y < doorLayer.getHeight(); y++) {
+                    TiledMapTileLayer.Cell cell = doorLayer.getCell(x, y);
+                    if (cell != null && cell.getTile() != null) {
+                        doorSpawns.add(new Vector2(x * tileSize, y * tileSize));
+                    }
+                }
+            }
+            System.out.println("[DOOR] Puertas cargadas: " + doorSpawns.size());
+        } else {
+            System.out.println("[DOOR] No existe capa 'Puertas'. Mapa sin puertas cargadas.");
         }
     }
 
@@ -163,5 +181,9 @@ public class MapManager {
     }
     public int getTileSize() {
         return tileSize;
+    }
+
+    public List<Vector2> getDoorSpawns() {
+        return doorSpawns;
     }
 }

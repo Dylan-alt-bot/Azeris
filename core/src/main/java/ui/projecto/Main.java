@@ -6,6 +6,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.math.Vector2;
@@ -48,7 +49,6 @@ public class Main extends ApplicationAdapter {
     private PlayerUI playerUI;
     private List<Enemy> enemies;
     private List<Utils> utils;
-    private float healCooldown = 0f;
 
     private List<EnemySpawn> initialEnemySpawns;
     private List<Vector2> initialHeartSpawns;
@@ -58,6 +58,15 @@ public class Main extends ApplicationAdapter {
 
     private boolean gamePaused = false;
     private boolean fullscreen = false;
+
+    private Texture pauseBg;
+
+    private TransitionState transitionState = TransitionState.NONE;
+    private float transitionTimer = 0f;
+    private float transitionDuration = 2f;
+    private float fadeAlpha = 0f;
+
+    private static final float BLACK_HOLD_TIME = 0.5f;
 
     @Override
     public void create() {
@@ -72,7 +81,7 @@ public class Main extends ApplicationAdapter {
         uiCamera = new OrthographicCamera();
         uiCamera.setToOrtho(false, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
 
-        mapManager = new MapManager("maps/beta/mapabase.tmx");
+        mapManager = new MapManager("maps/mapas/Mapa2.tmx");
         playerSpawn = mapManager.getRandomPlayerSpawn();
         jugadorPrincipal = new Player(playerSpawn.x, playerSpawn.y, mapManager);
         playerUI = new PlayerUI(jugadorPrincipal);
@@ -108,27 +117,53 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void render() {
+        pauseBg = new Texture("extras/fnd_negro.png");
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
             gamePaused = !gamePaused;
             if (gamePaused) {
                 if (bgMusic != null) bgMusic.pause();
                 for (Enemy enemy : enemies) enemy.stopAllSounds();
             } else {
-                if (bgMusic != null) bgMusic.stop();
+                if (bgMusic != null) bgMusic.play();
             }
         }
         if (gamePaused) {
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
             batch.setProjectionMatrix(uiCamera.combined);
             batch.begin();
-            font.draw(batch, "JUEGO EN PAUSA",  330f, 240f);
+            font.draw(batch, "JUEGO EN PAUSA",  275f, 250f);
             batch.end();
             return;
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) toggleFullscreen();
-
         float deltaTime = Gdx.graphics.getDeltaTime();
-
+        if (transitionState != TransitionState.NONE) {
+            transitionTimer += deltaTime;
+            switch (transitionState) {
+                case FADING_IN:
+                    fadeAlpha = Math.min(1f, transitionTimer / (transitionDuration * 0.5f));
+                    if (fadeAlpha >= 1f) {
+                        transitionState = TransitionState.HOLDING;
+                        transitionTimer = 0f;
+                    }
+                    break;
+                case HOLDING:
+                    fadeAlpha = 1f;
+                    if (transitionTimer >= BLACK_HOLD_TIME) {
+                        transitionState = TransitionState.FADING_OUT;
+                        transitionTimer = 0f;
+                    }
+                    break;
+                case FADING_OUT:
+                    fadeAlpha = 1f - Math.min(1f, transitionTimer / (transitionDuration * 0.5f));
+                    if (fadeAlpha <= 0f) {
+                        transitionState = TransitionState.NONE;
+                        transitionTimer = 0f;
+                        fadeAlpha = 0f;
+                    }
+                    break;
+            }
+        }
         if (jugadorPrincipal.getVida().isMuerto() && Gdx.input.isKeyJustPressed(Input.Keys.R)) {
             jugadorPrincipal.getVida().revivir();
 
@@ -216,11 +251,41 @@ public class Main extends ApplicationAdapter {
             }
         }
 
+        if (transitionState == TransitionState.NONE) {
+            for (Vector2 door : mapManager.getDoorSpawns()) {
+
+                float dx = door.x - mapManager.getTileSize() * 0.5f;
+                float dy = door.y - mapManager.getTileSize() * 0.5f;
+                float size = mapManager.getTileSize() * 2f;
+                if (jugadorPrincipal.x < dx + size &&
+                    jugadorPrincipal.x + ConstantsPlayer.WIDTH > dx &&
+                    jugadorPrincipal.y < dy + size &&
+                    jugadorPrincipal.y + ConstantsPlayer.HEIGHT > dy) {
+
+                    transitionState = TransitionState.FADING_IN;
+                    transitionTimer = 0f;
+                    fadeAlpha = 0f;
+                    break;
+                }
+            }
+        }
+
         jugadorPrincipal.render(batch, deltaTime);
 
         batch.end();
         batch.setProjectionMatrix(uiCamera.combined);
         batch.begin();
+
+        if (fadeAlpha > 0f && pauseBg != null) {
+            batch.setColor(0, 0, 0, fadeAlpha);
+            batch.draw(
+                pauseBg,
+                0, 0,
+                ConstantsPlayer.VIRTUAL_WIDTH,
+                ConstantsPlayer.VIRTUAL_HEIGHT
+            );
+            batch.setColor(1, 1, 1, 1);
+        }
 
         String killsText = "Enemigos matados: " + enemiesKilled;
         font.draw(batch, killsText, 20, 430);
@@ -325,5 +390,12 @@ public class Main extends ApplicationAdapter {
     @Override
     public void resume() {
         if (bgMusic != null) bgMusic.play();
+    }
+
+    private enum TransitionState {
+        NONE,
+        FADING_IN,
+        HOLDING,
+        FADING_OUT
     }
 }

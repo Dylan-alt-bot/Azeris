@@ -410,7 +410,7 @@ public class Player{
         System.out.println("  Velocidad x" + ConstantsPlayer.AZERIS_SPEED);
     }
     public void stopAllSounds(){
-        audio.stopRun();
         wasRunning = false;
+        audio.stopRun();
     }
 }
