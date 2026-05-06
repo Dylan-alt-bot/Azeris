@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import ui.projecto.mecanicas.Door;
 import ui.projecto.mecanicas.Enemies.Enemy;
 import ui.projecto.mecanicas.Enemies.EnemySpawn;
 import ui.projecto.mecanicas.MapManager;
@@ -49,6 +50,7 @@ public class Main extends ApplicationAdapter {
     private PlayerUI playerUI;
     private List<Enemy> enemies;
     private List<Utils> utils;
+    private List<Door> doors;
 
     private List<EnemySpawn> initialEnemySpawns;
     private List<Vector2> initialHeartSpawns;
@@ -59,12 +61,7 @@ public class Main extends ApplicationAdapter {
     private boolean gamePaused = false;
     private boolean fullscreen = false;
 
-    private Texture pauseBg;
-
     private TransitionState transitionState = TransitionState.NONE;
-    private float transitionTimer = 0f;
-    private float transitionDuration = 2f;
-    private float fadeAlpha = 0f;
 
     private static final float BLACK_HOLD_TIME = 0.5f;
 
@@ -81,7 +78,7 @@ public class Main extends ApplicationAdapter {
         uiCamera = new OrthographicCamera();
         uiCamera.setToOrtho(false, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
 
-        mapManager = new MapManager("maps/mapas/Mapa4.tmx");
+        mapManager = new MapManager("maps/mapas/Mapa8.tmx");
         playerSpawn = mapManager.getRandomPlayerSpawn();
         jugadorPrincipal = new Player(playerSpawn.x, playerSpawn.y, mapManager);
         playerUI = new PlayerUI(jugadorPrincipal);
@@ -106,6 +103,12 @@ public class Main extends ApplicationAdapter {
         if (azerisSpawn != null){
             utils.add(new Azeris(azerisSpawn.x, azerisSpawn.y));
         }
+
+        doors = new ArrayList<>();
+        for (Vector2 doorPos : mapManager.getDoorSpawns()) {
+            doors.add(new Door(doorPos, mapManager.getTileSize()));
+        }
+
         this.glProfiler = new GLProfiler(Gdx.graphics);
         this.glProfiler.enable();
 
@@ -117,7 +120,6 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void render() {
-        pauseBg = new Texture("extras/fnd_negro.png");
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
             gamePaused = !gamePaused;
             if (gamePaused) {
@@ -137,33 +139,10 @@ public class Main extends ApplicationAdapter {
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) toggleFullscreen();
         float deltaTime = Gdx.graphics.getDeltaTime();
-        if (transitionState != TransitionState.NONE) {
-            transitionTimer += deltaTime;
-            switch (transitionState) {
-                case FADING_IN:
-                    fadeAlpha = Math.min(1f, transitionTimer / (transitionDuration * 0.5f));
-                    if (fadeAlpha >= 1f) {
-                        transitionState = TransitionState.HOLDING;
-                        transitionTimer = 0f;
-                    }
-                    break;
-                case HOLDING:
-                    fadeAlpha = 1f;
-                    if (transitionTimer >= BLACK_HOLD_TIME) {
-                        transitionState = TransitionState.FADING_OUT;
-                        transitionTimer = 0f;
-                    }
-                    break;
-                case FADING_OUT:
-                    fadeAlpha = 1f - Math.min(1f, transitionTimer / (transitionDuration * 0.5f));
-                    if (fadeAlpha <= 0f) {
-                        transitionState = TransitionState.NONE;
-                        transitionTimer = 0f;
-                        fadeAlpha = 0f;
-                    }
-                    break;
-            }
+        for (Door door : doors) {
+            door.update(deltaTime, jugadorPrincipal);
         }
+
         if (jugadorPrincipal.getVida().isMuerto() && Gdx.input.isKeyJustPressed(Input.Keys.R)) {
             jugadorPrincipal.getVida().revivir();
 
@@ -252,50 +231,30 @@ public class Main extends ApplicationAdapter {
         }
 
         if (transitionState == TransitionState.NONE) {
-            for (Vector2 door : mapManager.getDoorSpawns()) {
-
-                float dx = door.x - mapManager.getTileSize() * 0.5f;
-                float dy = door.y - mapManager.getTileSize() * 0.5f;
-                float size = mapManager.getTileSize() * 2f;
-                if (jugadorPrincipal.x < dx + size &&
-                    jugadorPrincipal.x + ConstantsPlayer.WIDTH > dx &&
-                    jugadorPrincipal.y < dy + size &&
-                    jugadorPrincipal.y + ConstantsPlayer.HEIGHT > dy) {
-
+            for (Door door : doors) {
+                if (door.collides(jugadorPrincipal)) {
                     transitionState = TransitionState.FADING_IN;
-                    transitionTimer = 0f;
-                    fadeAlpha = 0f;
                     break;
                 }
             }
         }
 
         jugadorPrincipal.render(batch, deltaTime);
-
         batch.end();
         batch.setProjectionMatrix(uiCamera.combined);
         batch.begin();
 
-        if (fadeAlpha > 0f && pauseBg != null) {
-            batch.setColor(0, 0, 0, fadeAlpha);
-            batch.draw(
-                pauseBg,
-                0, 0,
-                ConstantsPlayer.VIRTUAL_WIDTH,
-                ConstantsPlayer.VIRTUAL_HEIGHT
-            );
-            batch.setColor(1, 1, 1, 1);
+        for (Door door : doors) {
+            door.renderFade(batch);
         }
 
         String killsText = "Enemigos matados: " + enemiesKilled;
         font.draw(batch, killsText, 20, 430);
-
         if (jugadorPrincipal.sprintOnCooldown()) {
             float remaining = jugadorPrincipal.getSprintCooldown();
             String text = String.format("Sprint: %.1f s", remaining);
             font.draw(batch, text, 20, 410);
         }
-
         if (jugadorPrincipal.getVida().isMuerto()) {
             bgMusic.setVolume(0.08f);
             String mensaje = "¡Has muerto! Presiona R para revivir";
@@ -310,7 +269,6 @@ public class Main extends ApplicationAdapter {
         batch.end();
         playerUI.render(batch);
     }
-
 
     private void toggleFullscreen() {
         if (!fullscreen) {
@@ -335,6 +293,9 @@ public class Main extends ApplicationAdapter {
         batch.dispose();
         glProfiler.disable();
         playerUI.dispose();
+        for (Door door : doors) {
+            door.dispose();
+        }
     }
 
     private Enemy createEnemy(EnemySpawn spawn){
