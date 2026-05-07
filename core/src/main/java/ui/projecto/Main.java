@@ -1,6 +1,6 @@
 package ui.projecto;
 
-import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.audio.Music;
@@ -35,7 +35,7 @@ import ui.projecto.personajes.Player.Util.ConstantsPlayer;
 
 import java.util.*;
 
-public class Main extends ApplicationAdapter {
+public class Main extends Game {
     private SpriteBatch batch;
     private Viewport viewport;
     private Player jugadorPrincipal;
@@ -79,6 +79,13 @@ public class Main extends ApplicationAdapter {
     private final float LEVEL_SCREEN_DURATION = 2.5f;
     private String levelScreenText = "";
 
+    private int bossKillThreshold;
+    private boolean bossUnlocked = false;
+    private boolean bossWarningShown = false;
+    private float bossWarningTimer = 0f;
+    private final float BOSS_WARNING_DURATION = 3.0f;
+
+    private boolean azerisCollected = false;
     @Override
     public void create() {
         fadeTexture = new Texture("extras/fnd_negro.png");
@@ -115,15 +122,13 @@ public class Main extends ApplicationAdapter {
             utils.add(new Heart(pos.x, pos.y));
         }
 
-        Vector2 azerisSpawn = mapManager.getAzerisSpawn();
-        if (azerisSpawn != null){
-            utils.add(new Azeris(azerisSpawn.x, azerisSpawn.y));
-        }
-
         doors = new ArrayList<>();
         for (Vector2 doorPos : mapManager.getDoorSpawns()) {
             doors.add(new Door(doorPos, mapManager.getTileSize()));
         }
+
+        bossKillThreshold = 100 + new Random().nextInt(51);
+        System.out.println("[BOSS] Aparece en " + bossKillThreshold + " kills");
 
         this.glProfiler = new GLProfiler(Gdx.graphics);
         this.glProfiler.enable();
@@ -162,13 +167,40 @@ public class Main extends ApplicationAdapter {
         }
 
         if (jugadorPrincipal.getVida().isMuerto() && Gdx.input.isKeyJustPressed(Input.Keys.R)) {
-            jugadorPrincipal.getVida().revivir();
+            enemiesKilled = 0;
+            countEnemies.clear();
+            azerisCollected = false;
+            bossUnlocked = false;
+            bossWarningShown = false;
+            bossWarningTimer = 0f;
+            currentLevel = 1;
+            showingLevelScreen = false;
+            levelScreenTimer = 0f;
+            isTransitioning = false;
+            transitionState = TransitionState.NONE;
+            fadeAlpha = 0f;
+            bossKillThreshold = 100 + new Random().nextInt(51);
+            System.out.println("[BOSS] Nuevo threshold: " + bossKillThreshold + " kills");
 
-            jugadorPrincipal.x = playerSpawn.x;
-            jugadorPrincipal.y = playerSpawn.y;
+            for (Enemy enemy : enemies) enemy.stopAllSounds();
+            enemies.clear();
+            for (Utils u : utils) u.stopAllSounds();
+            utils.clear();
+            doors.clear();
 
-            resetEnemies();
-            resetUtils();
+            jugadorPrincipal.stopAllSounds();
+            playerUI.dispose();
+            dungeonManager = new DungeonManager();
+
+            mapManager = null;
+            mapManager = new MapManager(dungeonManager.getCurrentRoom().getMapPath());
+
+            playerSpawn = mapManager.getRandomPlayerSpawn();
+            jugadorPrincipal = new Player(playerSpawn.x, playerSpawn.y, mapManager);
+            playerUI = new PlayerUI(jugadorPrincipal);
+
+            loadRoom();
+            System.out.println("[RESET] Partida reiniciada desde cero");
         }
 
         camera.position.set(
@@ -195,6 +227,46 @@ public class Main extends ApplicationAdapter {
             if (enemy.isDead() && !countEnemies.contains(enemy)){
                 enemiesKilled++;
                 countEnemies.add(enemy);
+
+                int KILLS_PER_MESSAGE = 25;
+
+                if (!bossUnlocked && enemiesKilled % KILLS_PER_MESSAGE == 0) {
+                    String[] mensajesDepresivos = {
+                        "¿Aquí moriré?",
+                        "¿Cuántas más quedan?",
+                        "Algo me dice que esto no acaba...",
+                        "Cada puerta es una trampa más.",
+                        "Mis huesos ya no aguantan.",
+                        "¿Habrá algo al final de todo esto?"
+                    };
+                    String[] mensajesPositivos = {
+                        "¡Puedo con esto!",
+                        "Cada enemigo me hace más fuerte.",
+                        "Ya casi estoy...",
+                        "Nada me detendrá.",
+                        "Siento el poder dentro de mí.",
+                        "El final está cerca, lo presiento.",
+                        "¡Hoy es el día!"
+                    };
+                    String[] mensajes = azerisCollected ? mensajesPositivos : mensajesDepresivos;
+                    levelScreenText = mensajes[new Random().nextInt(mensajes.length)];
+                    showingLevelScreen = true;
+                    levelScreenTimer = 0f;
+                }
+
+                if (!bossUnlocked && enemiesKilled >= bossKillThreshold) {
+                    bossUnlocked = true;
+                    bossWarningShown = true;
+                    bossWarningTimer = 0f;
+                    System.out.println("[BOSS] Activado - próxima room será el jefe");
+                }
+            }
+
+            if (!bossUnlocked && enemiesKilled >= bossKillThreshold) {
+                bossUnlocked = true;
+                bossWarningShown = true;
+                bossWarningTimer = 0f;
+                System.out.println("[BOSS] Activado - próxima room será el jefe");
             }
             enemy.render(batch);
 
@@ -242,6 +314,11 @@ public class Main extends ApplicationAdapter {
                     jugadorPrincipal.applyAzerisBoost();
                     System.out.println("[AZERIS] Boost aplicado al jugador");
                     u.collect();
+                    azerisCollected = true;
+
+                    levelScreenText = "¿Qué es esto?\nMe siento más...";
+                    showingLevelScreen = true;
+                    levelScreenTimer = 0f;
                 }
             }
         }
@@ -279,12 +356,10 @@ public class Main extends ApplicationAdapter {
         String killsText = "Enemigos matados: " + enemiesKilled;
         font.draw(batch, killsText, 20, 430);
         if (!areAllEnemiesDead()) {
-            font.draw(
-                batch,
-                "Derrota a todos los enemigos para pasar de habitación",
-                180,
-                410
-            );
+            String combatMsg = dungeonManager.isLastRoom()
+                ? "¡VENCELO!"
+                : "Derrota a todos los enemigos para pasar de habitación";
+            font.draw(batch, combatMsg, 180, 410);
         }
         if (jugadorPrincipal.sprintOnCooldown()) {
             float remaining = jugadorPrincipal.getSprintCooldown();
@@ -305,26 +380,39 @@ public class Main extends ApplicationAdapter {
 
         if (showingLevelScreen) {
             levelScreenTimer += Gdx.graphics.getDeltaTime();
-
             batch.setColor(0, 0, 0, 0.75f);
             batch.draw(fadeTexture, 0, 0,
                 ConstantsPlayer.VIRTUAL_WIDTH,
                 ConstantsPlayer.VIRTUAL_HEIGHT);
             batch.setColor(1, 1, 1, 1);
 
-            GlyphLayout layout = new GlyphLayout(font, levelScreenText);
-            float tx = (ConstantsPlayer.VIRTUAL_WIDTH - layout.width) / 2f;
-            float ty = (ConstantsPlayer.VIRTUAL_HEIGHT + layout.height) / 2f;
-            font.draw(batch, layout, tx, ty);
+            String[] lineas = levelScreenText.split("\n");
+            float lineHeight = 20f;
+            float totalHeight = lineas.length * lineHeight;
+            float startY = (ConstantsPlayer.VIRTUAL_HEIGHT + totalHeight) / 2f;
 
-            String sub = "Continúa explorando...";
-            GlyphLayout subLayout = new GlyphLayout(font, sub);
-            float sx = (ConstantsPlayer.VIRTUAL_WIDTH - subLayout.width) / 2f;
-            font.draw(batch, subLayout, sx, ty - 20f);
+            for (int i = 0; i < lineas.length; i++) {
+                GlyphLayout gl = new GlyphLayout(font, lineas[i]);
+                float lx = (ConstantsPlayer.VIRTUAL_WIDTH - gl.width) / 2f;
+                font.draw(batch, gl, lx, startY - i * lineHeight);
+            }
 
             if (levelScreenTimer >= LEVEL_SCREEN_DURATION) {
                 showingLevelScreen = false;
                 levelScreenTimer = 0f;
+            }
+        }
+
+        if (bossWarningShown && !dungeonManager.isLastRoom()) {
+            bossWarningTimer += Gdx.graphics.getDeltaTime();
+            String msg = "Entrenaste mucho, hora de vencerlo...";
+            GlyphLayout layout = new GlyphLayout(font, msg);
+            float x = (ConstantsPlayer.VIRTUAL_WIDTH - layout.width) / 2f;
+            float y = (ConstantsPlayer.VIRTUAL_HEIGHT / 2f) + 80f;
+            font.draw(batch, layout, x, y);
+
+            if (bossWarningTimer >= BOSS_WARNING_DURATION) {
+                bossWarningShown = false;
             }
         }
         batch.end();
@@ -407,32 +495,6 @@ public class Main extends ApplicationAdapter {
         return true;
     }
 
-    private void resetEnemies(){
-        for (Enemy enemy : enemies){
-            enemy.stopAllSounds();
-        }
-        enemies.clear();
-        countEnemies.clear();
-        enemiesKilled = 0;
-        for (EnemySpawn spawn : initialEnemySpawns){
-            Enemy enemy = createEnemy(spawn);
-            if (enemy != null) enemies.add(enemy);
-        }
-    }
-
-    private void resetUtils(){
-        utils.clear();
-        if (initialHeartSpawns != null){
-            for (Vector2 pos : initialHeartSpawns){
-                utils.add(new Heart(pos.x, pos.y));
-            }
-        }
-        Vector2 azerisSpawn = mapManager.getAzerisSpawn();
-        if (azerisSpawn != null){
-            utils.add(new Azeris(azerisSpawn.x, azerisSpawn.y));
-        }
-    }
-
     private void loadRoom() {
         if (mapManager != null) {
             mapManager.dispose();
@@ -461,10 +523,15 @@ public class Main extends ApplicationAdapter {
             utils.add(new Heart(pos.x, pos.y));
         }
 
-        Vector2 azerisSpawn = mapManager.getAzerisSpawn();
-        if (azerisSpawn != null) {
-            utils.add(new Azeris(azerisSpawn.x, azerisSpawn.y));
+        int AZERIS_KILL_THRESHOLD = 80;
+        if (enemiesKilled >= AZERIS_KILL_THRESHOLD && !azerisCollected) {
+            Vector2 azerisSpawn = mapManager.getAzerisSpawn();
+            if (azerisSpawn != null) {
+                utils.add(new Azeris(azerisSpawn.x, azerisSpawn.y));
+                System.out.println("[AZERIS] Spawneado en sala actual");
+            }
         }
+
         for (Vector2 doorPos : mapManager.getDoorSpawns()) {
             doors.add(new Door(doorPos, mapManager.getTileSize()));
         }
@@ -479,26 +546,30 @@ public class Main extends ApplicationAdapter {
             case FADING_IN:
                 fadeAlpha = Math.min(1f, transitionTimer / (TRANSITION_DURATION * 0.5f));
                 if (fadeAlpha >= 1f && !roomChanged) {
-                    int levelBefore = getLevel(dungeonManager.getCurrentRoomIndex());
-                    boolean success = dungeonManager.nextRoom();
-                    if (success) {
-                        int levelAfter = getLevel(dungeonManager.getCurrentRoomIndex());
-                        if (levelAfter > levelBefore) {
-                            currentLevel = levelAfter;
-                            levelScreenText = dungeonManager.isLastRoom()
-                                ? "¡JEFE FINAL!"
-                                : "NIVEL" + currentLevel + " COMPLETADO!";
-                            showingLevelScreen = true;
-                            levelScreenTimer = 0f;
-                        }
-                        loadRoom();
-                    } else {
-                        levelScreenText = "¡JUEGO COMPLETADO!";
+                    roomChanged = true;
+                    if (bossUnlocked && !dungeonManager.isLastRoom()) {
+                        dungeonManager.jumpToBoss();
+                        levelScreenText = "\"ES TÚ FIN\"";
                         showingLevelScreen = true;
                         levelScreenTimer = 0f;
-                        System.out.println("DUNGEON COMPLETADA");
+                        bossWarningShown = false;
+                        loadRoom();
+                    } else {
+                        boolean success = dungeonManager.nextRoom();
+                        if (success) {
+                            if (dungeonManager.isLastRoom()) {
+                                levelScreenText = "¡Es hora de enfrentarlo...";
+                                showingLevelScreen = true;
+                                levelScreenTimer = 0f;
+                            }
+                            loadRoom();
+                        } else {
+                            levelScreenText = "¡JUEGO COMPLETADO!";
+                            showingLevelScreen = true;
+                            levelScreenTimer = 0f;
+                            System.out.println("[DUNGEON] Completada");
+                        }
                     }
-                    roomChanged = true;
                     transitionState = TransitionState.FADING_OUT;
                     transitionTimer = 0f;
                 }
@@ -527,13 +598,6 @@ public class Main extends ApplicationAdapter {
         }
 
         jugadorPrincipal.resetPosition(x, y);
-    }
-
-    private int getLevel(int roomIndex) {
-        if (roomIndex <= 1) return 1;
-        if (roomIndex <= 3) return 2;
-        if (roomIndex <= 5) return 3;
-        return 4;
     }
 
     @Override

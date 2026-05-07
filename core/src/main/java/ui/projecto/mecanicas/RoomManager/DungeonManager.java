@@ -1,22 +1,26 @@
 package ui.projecto.mecanicas.RoomManager;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
 public class DungeonManager {
-    private final List<RoomData> dungeonRooms;
-    private int currentRoomIndex;
+    private final List<RoomData> normalRooms;
+    private final RoomData bossRoom;
+    private RoomData currentRoom;
+    private boolean onBoss = false;
+    private int currentRoomIndex = 0;
+    private final Random random = new Random();
 
     public DungeonManager() {
-        dungeonRooms = new ArrayList<>();
-        generateDungeon();
+        normalRooms = new ArrayList<>();
+        loadAllRooms();
+        bossRoom = new RoomData("maps/beta/finalboss.tmx", true);
+        currentRoom = normalRooms.get(random.nextInt(normalRooms.size()));
+        System.out.println("[DUNGEON] Dungeon iniciado con " + normalRooms.size() + " salas disponibles");
     }
 
-    private void generateDungeon() {
-        List<RoomData> normalRooms = new ArrayList<>();
-
+    private void loadAllRooms() {
         normalRooms.add(new RoomData("maps/mapas/Mapa1.tmx", false));
         normalRooms.add(new RoomData("maps/mapas/Mapa2.tmx", false));
         normalRooms.add(new RoomData("maps/mapas/Mapa3.tmx", false));
@@ -33,38 +37,38 @@ public class DungeonManager {
         normalRooms.add(new RoomData("maps/mapas/Mapa28.tmx", false));
         normalRooms.add(new RoomData("maps/mapas/Mapa29.tmx", false));
         normalRooms.add(new RoomData("maps/mapas/Mapa30.tmx", false));
-
-        RoomData bossRoom = new RoomData("maps/beta/finalboss.tmx", true);
-
-        Collections.shuffle(normalRooms);
-        Random random = new Random();
-        int roomCount = random.nextInt(4) + 3;
-        for (int i = 0; i < roomCount; i++) {
-            dungeonRooms.add(normalRooms.get(i));
-        }
-
-        dungeonRooms.add(bossRoom);
-        currentRoomIndex = 0;
-        System.out.println("[DUNGEON] Habitaciones generadas: " + dungeonRooms.size());
     }
 
     public RoomData getCurrentRoom() {
-        return dungeonRooms.get(currentRoomIndex);
+        return onBoss ? bossRoom : currentRoom;
     }
 
     public boolean nextRoom() {
-        if (currentRoomIndex + 1 >= dungeonRooms.size()) {
-            return false;
+        if (onBoss) return false;
+        RoomData previous = currentRoom;
+        if (normalRooms.size() > 1) {
+            RoomData next;
+            do {
+                next = normalRooms.get(random.nextInt(normalRooms.size()));
+            } while (next.getMapPath().equals(previous.getMapPath()));
+            currentRoom = next;
         }
         currentRoomIndex++;
         return true;
     }
 
-    public boolean isLastRoom() {
-        return currentRoomIndex == dungeonRooms.size() - 1;
+    public void jumpToBoss() {
+        onBoss = true;
+        System.out.println("[DUNGEON] Saltando al boss");
     }
 
-    public int getCurrentRoomIndex() {
-        return currentRoomIndex;
+    public boolean isLastRoom() {
+        return onBoss;
+    }
+
+    public void reset() {
+        onBoss = false;
+        currentRoomIndex = 0;
+        currentRoom = normalRooms.get(random.nextInt(normalRooms.size()));
     }
 }
