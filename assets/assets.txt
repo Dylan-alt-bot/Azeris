@@ -64,18 +64,30 @@ maps/beta/finalboss.tmx
 maps/beta/mapabase.tmx
 maps/mapa_beta.png
 maps/mapabase.png
-maps/mapas/Mapa.tmx
+maps/mapas/Mapa1.tmx
+maps/mapas/Mapa10.tmx
+maps/mapas/Mapa11.tmx
+maps/mapas/Mapa12.tmx
 maps/mapas/Mapa2.tmx
+maps/mapas/Mapa26.tmx
+maps/mapas/Mapa28.tmx
+maps/mapas/Mapa29.tmx
 maps/mapas/Mapa3.tmx
+maps/mapas/Mapa30.tmx
 maps/mapas/Mapa4.tmx
-maps/mapas/Nivel3A.tmx
-maps/mapas/Nivel3B.tmx
+maps/mapas/Mapa5.tmx
+maps/mapas/Mapa6.tmx
+maps/mapas/Mapa7.tmx
+maps/mapas/Mapa8.tmx
+maps/mapas/Mapa9.tmx
 maps/textures/Objects.png
 maps/textures/Other_objects.png
 maps/textures/Skeleton.png
+maps/textures/Water_coasts_animation.png
 maps/textures/among us.png
 maps/textures/azeris.png
 maps/textures/corazon.png
+maps/textures/decorative_cracks_coasts_animation.png
 maps/textures/decorative_cracks_floor.png
 maps/textures/decorative_cracks_walls.png
 maps/textures/diablo.png
@@ -86,6 +98,9 @@ maps/textures/player.png
 maps/textures/puerta.png
 maps/textures/supplies_objects.png
 maps/textures/walls_floor.png
+maps/textures/water_details_animation.png
+maps/tilesets/Coasts water 2 pro max.tsx
+maps/tilesets/Coasts water.tsx
 maps/tilesets/Fuegos.tsx
 maps/tilesets/Objetos.tsx
 maps/tilesets/Other_objects.tsx
@@ -102,6 +117,7 @@ maps/tilesets/player.tsx
 maps/tilesets/puertas.tsx
 maps/tilesets/skeleton.tsx
 maps/tilesets/supplies_objects.tsx
+maps/tilesets/water animation.tsx
 player/player.png
 player/player_atacando.png
 player/player_atacar.png

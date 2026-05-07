@@ -186,4 +186,9 @@ public class MapManager {
     public List<Vector2> getDoorSpawns() {
         return doorSpawns;
     }
+
+    public void dispose() {
+        if (map != null) map.dispose();
+        if (mapRenderer != null) mapRenderer.dispose();
+    }
 }

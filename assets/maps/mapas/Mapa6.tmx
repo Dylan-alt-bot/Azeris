@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="50" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="17" nextobjectid="94">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="50" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="17" nextobjectid="96">
  <tileset firstgid="1" source="../tilesets/Paredes2.tsx"/>
  <tileset firstgid="494" source="../tilesets/puertas.tsx"/>
  <tileset firstgid="498" source="../tilesets/Paredes.tsx"/>
@@ -12,6 +12,7 @@
  <tileset firstgid="2064" source="../tilesets/goomba.tsx"/>
  <tileset firstgid="2065" source="../tilesets/player.tsx"/>
  <tileset firstgid="2066" source="../tilesets/corazon.tsx"/>
+ <tileset firstgid="2067" source="../tilesets/azeris.tsx"/>
  <group id="2" name="Room">
   <layer id="1" name="Fondo" width="50" height="40">
    <data encoding="csv">
@@ -427,6 +428,8 @@
    <object id="91" gid="2066" x="109" y="70.3333" width="18" height="18"/>
    <object id="92" gid="2066" x="715" y="72" width="18" height="18"/>
    <object id="93" gid="2066" x="406" y="302" width="18" height="18"/>
+   <object id="94" gid="2067" x="320" y="304" width="21" height="21"/>
+   <object id="95" gid="2067" x="464" y="304" width="21" height="21"/>
   </objectgroup>
   <objectgroup id="10" name="Entities">
    <object id="1" gid="1679" x="65" y="228.5" width="32" height="32"/>
@@ -445,8 +448,6 @@
    <object id="50" gid="2064" x="479" y="361" width="16" height="16"/>
    <object id="51" gid="2064" x="292" y="263" width="16" height="16"/>
    <object id="52" gid="2064" x="459" y="172" width="16" height="16"/>
-   <object id="53" gid="2064" x="67" y="69" width="16" height="16"/>
-   <object id="54" gid="2064" x="677" y="72" width="16" height="16"/>
    <object id="55" gid="2064" x="616" y="216" width="16" height="16"/>
    <object id="56" gid="2064" x="670" y="230" width="16" height="16"/>
    <object id="57" gid="2064" x="722" y="226" width="16" height="16"/>

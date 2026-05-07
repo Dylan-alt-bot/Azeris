@@ -26,7 +26,7 @@ public class Player{
     private PlayerState state = PlayerState.IDLE, previousState = PlayerState.IDLE;
     private final PlayerAudioManager audio;
 
-    private final MapManager map;
+    private MapManager map;
     private final Vida vida = new Vida(ConstantsPlayer.VIDA);
     private final AnimationManager animations;
     private final PlayerRenderer renderer;
@@ -412,5 +412,14 @@ public class Player{
     public void stopAllSounds(){
         wasRunning = false;
         audio.stopRun();
+    }
+
+    public void resetPosition(float x, float y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public void setMap (MapManager newMap) {
+        this.map = newMap;
     }
 }

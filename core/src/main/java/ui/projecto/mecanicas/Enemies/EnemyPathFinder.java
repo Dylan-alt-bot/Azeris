@@ -16,25 +16,35 @@ public class EnemyPathFinder {
     }
 
     public Vector2 findNextStep(float startX, float startY, float targetX, float targetY) {
-
         float dx = targetX - startX;
         float dy = targetY - startY;
-
         if (dx * dx + dy * dy < 16f) {
             return new Vector2(targetX, targetY);
         }
-
         Node startNode = new Node(worldToTile(startX, startY));
         Node targetNode = new Node(worldToTile(targetX, targetY));
 
-        if (isBlocked(startNode) || isBlocked(targetNode)) return null;
-
+        if (isBlocked(startNode)) {
+            startNode = findNearestFreeNode(startNode);
+            if (startNode == null) return null;
+        }
+        if (isBlocked(targetNode)) return null;
         List<Node> path = aStar(startNode, targetNode);
-
         if (path == null || path.size() < 2) return null;
-
         Node next = path.get(1);
         return tileToWorld(next.x, next.y);
+    }
+
+    private Node findNearestFreeNode(Node blocked) {
+        for (int radius = 1; radius <= 3; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dy = -radius; dy <= radius; dy++) {
+                    Node candidate = new Node(new int[]{blocked.x + dx, blocked.y + dy});
+                    if (!isBlocked(candidate)) return candidate;
+                }
+            }
+        }
+        return null;
     }
 
     private boolean isBlocked(Node n) {

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="50" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="14" nextobjectid="43">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="50" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="14" nextobjectid="45">
  <tileset firstgid="1" source="../tilesets/Paredes2.tsx"/>
  <tileset firstgid="494" source="../tilesets/player.tsx"/>
  <tileset firstgid="495" source="../tilesets/Suelo.tsx"/>
@@ -11,6 +11,7 @@
  <tileset firstgid="624" source="../tilesets/supplies_objects.tsx"/>
  <tileset firstgid="1179" source="../tilesets/Objetos.tsx"/>
  <tileset firstgid="1395" source="../tilesets/Other_objects.tsx"/>
+ <tileset firstgid="1579" source="../tilesets/azeris.tsx"/>
  <group id="2" name="Room">
   <layer id="1" name="Fondo" width="50" height="40">
    <data encoding="csv">
@@ -40,7 +41,7 @@
 37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,139,139,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,
 37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,
 37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,
-37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,
+37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,1579,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,
 37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,
 37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,
 37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,37,
@@ -232,7 +233,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
   </layer>
-  <layer id="5" name="Puertas" width="50" height="40" offsetx="0" offsety="0">
+  <layer id="5" name="Puertas" width="50" height="40">
    <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -304,8 +305,7 @@
    <object id="37" gid="622" x="250" y="388" width="32" height="32"/>
    <object id="38" gid="622" x="361" y="464" width="32" height="32"/>
   </objectgroup>
-  <objectgroup id="9" name="Objects"/>
-  <objectgroup id="10" name="Heart">
+  <objectgroup id="10" name="Utils">
    <object id="4" gid="619" x="102" y="543" width="18" height="18"/>
    <object id="5" gid="619" x="95" y="282" width="18" height="18"/>
    <object id="6" gid="619" x="709" y="273" width="18" height="18"/>
@@ -315,6 +315,8 @@
    <object id="10" gid="619" x="581" y="105" width="18" height="18"/>
    <object id="11" gid="619" x="242" y="93" width="18" height="18"/>
    <object id="12" gid="619" x="657" y="571" width="18" height="18"/>
+   <object id="43" gid="1579" x="256" y="416" width="21" height="21"/>
+   <object id="44" gid="1579" x="512" y="416" width="21" height="21"/>
   </objectgroup>
   <objectgroup id="11" name="Player">
    <object id="39" gid="494" x="384" y="112" width="64" height="64"/>
