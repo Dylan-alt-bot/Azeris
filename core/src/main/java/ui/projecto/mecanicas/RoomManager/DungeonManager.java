@@ -33,6 +33,10 @@ public class DungeonManager {
         normalRooms.add(new RoomData("maps/mapas/Mapa10.tmx", false));
         normalRooms.add(new RoomData("maps/mapas/Mapa11.tmx", false));
         normalRooms.add(new RoomData("maps/mapas/Mapa12.tmx", false));
+        normalRooms.add(new RoomData("maps/mapas/Mapa13.tmx", false));
+        normalRooms.add(new RoomData("maps/mapas/Mapa14.tmx", false));
+        normalRooms.add(new RoomData("maps/mapas/Mapa24.tmx", false));
+        normalRooms.add(new RoomData("maps/mapas/Mapa25.tmx", false));
         normalRooms.add(new RoomData("maps/mapas/Mapa26.tmx", false));
         normalRooms.add(new RoomData("maps/mapas/Mapa28.tmx", false));
         normalRooms.add(new RoomData("maps/mapas/Mapa29.tmx", false));
@@ -64,11 +68,5 @@ public class DungeonManager {
 
     public boolean isLastRoom() {
         return onBoss;
-    }
-
-    public void reset() {
-        onBoss = false;
-        currentRoomIndex = 0;
-        currentRoom = normalRooms.get(random.nextInt(normalRooms.size()));
     }
 }

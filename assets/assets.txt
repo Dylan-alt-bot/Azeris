@@ -68,7 +68,10 @@ maps/mapas/Mapa1.tmx
 maps/mapas/Mapa10.tmx
 maps/mapas/Mapa11.tmx
 maps/mapas/Mapa12.tmx
+maps/mapas/Mapa13.tmx
+maps/mapas/Mapa14.tmx
 maps/mapas/Mapa2.tmx
+maps/mapas/Mapa25.tmx
 maps/mapas/Mapa26.tmx
 maps/mapas/Mapa28.tmx
 maps/mapas/Mapa29.tmx
@@ -118,6 +121,20 @@ maps/tilesets/puertas.tsx
 maps/tilesets/skeleton.tsx
 maps/tilesets/supplies_objects.tsx
 maps/tilesets/water animation.tsx
+pantalla/ajustes.png
+pantalla/ajustes_hover.png
+pantalla/complemento.png
+pantalla/creditos.png
+pantalla/creditos_hover.png
+pantalla/fondo.png
+pantalla/jugar.png
+pantalla/jugar_hover.png
+pantalla/puntuacion.png
+pantalla/puntuacion_hover.png
+pantalla/salir.png
+pantalla/salir_hover.png
+pantalla/sfx/fuego.wav
+pantalla/sfx/select.wav
 player/player.png
 player/player_atacando.png
 player/player_atacar.png

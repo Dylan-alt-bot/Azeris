@@ -3,7 +3,7 @@ package ui.projecto.personajes.Player.Util;
 public class ConstantsPlayer {
     public static int VIDA = 100;
     public static int DAMAGE = 10;
-    public static float VIRTUAL_WIDTH = 650, VIRTUAL_HEIGHT = 480;
+    public static float VIRTUAL_WIDTH = 640, VIRTUAL_HEIGHT = 480;
     public static float WIDTH = 32f, HEIGHT = 32f;
 
     public static float VELOCIDAD = 150f;
