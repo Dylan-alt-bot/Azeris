@@ -22,10 +22,10 @@ public class CreditsScreen implements Screen {
     private ShapeRenderer shapeRenderer;
 
     private static final float WINDOW_X = 80f;
-    private static final float WINDOW_Y = 30f;
+    private static final float WINDOW_Y = 20f;
     private static final float WINDOW_WIDTH = 480f;
-    private static final float WINDOW_HEIGHT = 360f;
-    private static final float PADDING = 15f;
+    private static final float WINDOW_HEIGHT = 340f;
+    private static final float PADDING = 12f;
     private boolean fullscreen = false;
 
     private static final String[][] LINES = {
@@ -50,7 +50,6 @@ public class CreditsScreen implements Screen {
         {"Esperamos que hayas disfrutado esta aventura", "body"},
         {"tanto como nosotros disfrutamos creándola.", "body"},
         {"", "gap"},
-        {"Gracias por apoyar proyectos indie hechos con cariño", "footer"},
     };
 
     public CreditsScreen(Main game) {
@@ -62,7 +61,7 @@ public class CreditsScreen implements Screen {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
 
-        background = new Texture("extras/fnd_negro.png"); // Nota: Agregar un fondo personalizado
+        background = new Texture("pantalla/creditos_fondo.png");
         shapeRenderer = new ShapeRenderer();
 
         fontTitle = new BitmapFont();

@@ -28,6 +28,9 @@ if (JavaVersion.current().isJava9Compatible()) {
 }
 
 dependencies {
+    implementation 'com.badlogicgames.gdx:gdx:1.12.1'
+    implementation 'com.google.code.gson:gson:2.10.1'
+
   implementation "com.badlogicgames.gdx-controllers:gdx-controllers-desktop:$gdxControllersVersion"
   implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
   implementation "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"

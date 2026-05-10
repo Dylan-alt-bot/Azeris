@@ -125,6 +125,7 @@ pantalla/ajustes.png
 pantalla/ajustes_hover.png
 pantalla/complemento.png
 pantalla/creditos.png
+pantalla/creditos_fondo.png
 pantalla/creditos_hover.png
 pantalla/fondo.png
 pantalla/jugar.png
