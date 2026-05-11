@@ -2,7 +2,7 @@ package ui.projecto;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import ui.projecto.Screens.MenuScreen;
+import ui.projecto.Screens.StartScreen;
 
 public class Main extends Game {
     public SpriteBatch batch;
@@ -10,7 +10,7 @@ public class Main extends Game {
     @Override
     public void create() {
         batch = new SpriteBatch();
-        setScreen(new MenuScreen(this));
+        setScreen(new StartScreen(this));
     }
 
     @Override
