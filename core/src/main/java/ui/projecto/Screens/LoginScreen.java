@@ -1,12 +1,14 @@
 package ui.projecto.Screens;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputAdapter;
-import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import firebase.FirebaseAuthService;
+import firebase.FirebaseFirestoreService;
+import firebase.SessionManager;
 import ui.projecto.Main;
 
 public class LoginScreen implements Screen {
@@ -58,9 +60,10 @@ public class LoginScreen implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         game.batch.begin();
         font.draw(game.batch, "PANTALLA LOGIN", 270, 380);
-        font.draw(game.batch, "TAB = cambiar campo",  255, 300);
-        font.draw(game.batch, "ENTER = login", 280, 270);
-        font.draw(game.batch, "ESC = volver", 285, 240);
+        font.draw(game.batch, "TAB = Cambiar campo",  255, 300);
+        font.draw(game.batch, "ENTER = Login", 280, 270);
+        font.draw(game.batch, "ESC = Volver", 285, 240);
+        font.draw(game.batch, "CTRL IZQUIERDO = \"Olvidé la contraseña\"", 190, 210);
 
         String emailText = (editingEmail ? "> " : "") + "Email: " + email;
         String hiddenPassword = "*".repeat(password.length());
@@ -92,6 +95,9 @@ public class LoginScreen implements Screen {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             game.setScreen(new StartScreen(game));
         }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.CONTROL_LEFT)) {
+            game.setScreen(new ForgotPasswordScreen(game));
+        }
         if (Gdx.input.isKeyJustPressed(Input.Keys.BACKSPACE)) {
             if (editingEmail && email.length() > 0) {
                 email.deleteCharAt(email.length() - 1);
@@ -100,13 +106,21 @@ public class LoginScreen implements Screen {
                 password.deleteCharAt(password.length() - 1);
             }
         }
-
         if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
             message = "Iniciando sesion...";
-            String response = FirebaseAuthService.login(email.toString(), password.toString());
-            if (response != null && response.contains("idToken")) {
+            String res = FirebaseAuthService.login(email.toString(), password.toString());
+            if (res != null && res.contains("idToken")) {
                 message = "LOGIN CORRECTO";
                 messageTimer = 0f;
+
+                Gson gson = new Gson();
+                FirebaseLoginResponse login = gson.fromJson(res, FirebaseLoginResponse.class);
+                JsonObject root = JsonParser.parseString(res).getAsJsonObject();
+                SessionManager.idToken = root.get("idToken").getAsString();
+                SessionManager.localId = root.get("localId").getAsString();
+                SessionManager.email = root.get("email").getAsString();
+                FirebaseFirestoreService.loadUserProfile(login.localId);
+                SessionManager.saveSession();
                 new Thread(() -> {
                     try {
                         Thread.sleep(1000);
@@ -122,6 +136,8 @@ public class LoginScreen implements Screen {
             }
         }
     }
+
+
 
     private void toggleFullscreen() {
         if (!fullscreen) {
@@ -141,4 +157,9 @@ public class LoginScreen implements Screen {
     public void dispose() {
         font.dispose();
     }
+}
+class FirebaseLoginResponse {
+    String localId;
+    String idToken;
+    String email;
 }

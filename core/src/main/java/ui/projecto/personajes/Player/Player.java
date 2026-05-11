@@ -411,7 +411,7 @@ public class Player{
     }
     public void stopAllSounds(){
         wasRunning = false;
-        audio.stopRun();
+        audio.stopAllSounds();
     }
 
     public void resetPosition(float x, float y) {

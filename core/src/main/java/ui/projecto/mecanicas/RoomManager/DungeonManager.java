@@ -35,7 +35,7 @@ public class DungeonManager {
         normalRooms.add(new RoomData("maps/mapas/Mapa12.tmx", false));
         normalRooms.add(new RoomData("maps/mapas/Mapa13.tmx", false));
         normalRooms.add(new RoomData("maps/mapas/Mapa14.tmx", false));
-        normalRooms.add(new RoomData("maps/mapas/Mapa24.tmx", false));
+        normalRooms.add(new RoomData("maps/mapas/Mapa15.tmx", false));
         normalRooms.add(new RoomData("maps/mapas/Mapa25.tmx", false));
         normalRooms.add(new RoomData("maps/mapas/Mapa26.tmx", false));
         normalRooms.add(new RoomData("maps/mapas/Mapa28.tmx", false));

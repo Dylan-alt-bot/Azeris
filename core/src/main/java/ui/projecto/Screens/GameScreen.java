@@ -11,9 +11,12 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import firebase.SessionManager;
 import ui.projecto.Main;
 import ui.projecto.mecanicas.Door;
 import ui.projecto.mecanicas.Enemies.Enemy;
@@ -36,6 +39,7 @@ import ui.projecto.personajes.Player.PlayerUI;
 import ui.projecto.personajes.Player.State.PlayerState;
 import ui.projecto.personajes.Player.Util.ConstantsPlayer;
 
+import java.time.LocalDate;
 import java.util.*;
 
 public class GameScreen implements Screen {
@@ -63,6 +67,8 @@ public class GameScreen implements Screen {
 
     private List<Door> doors;
     private Texture fadeTexture;
+    private Texture pauseExit;
+    private Texture pauseExitHover;
     private float fadeAlpha = 0f;
     private float transitionTimer = 0f;
     private final float TRANSITION_DURATION = 1.2f;
@@ -75,16 +81,18 @@ public class GameScreen implements Screen {
 
     private int enemiesKilled = 0;
     private int playerDeaths = 0;
+    private int pointsThisRun = 0;
     private final Set<Enemy> countEnemies = new HashSet<>();
 
     private boolean gamePaused = false;
     private boolean deathRegistered = false;
     private boolean fullscreen = false;
+    private boolean showingLevelScreen = false;
+    private boolean hoverPauseExit = false;
 
     private TransitionState transitionState = GameScreen.TransitionState.NONE;
 
     private int currentLevel = 1;
-    private boolean showingLevelScreen = false;
     private float levelScreenTimer = 0f;
     private final float LEVEL_SCREEN_DURATION = 2.5f;
     private String levelScreenText = "";
@@ -103,6 +111,8 @@ public class GameScreen implements Screen {
 
     private void create() {
         fadeTexture = new Texture("extras/fnd_negro.png");
+        pauseExit = new Texture("extras/exit.png");
+        pauseExitHover = new Texture("extras/exit_hover.png");
         batch = new SpriteBatch();
         camera = new OrthographicCamera();
         viewport = new ExtendViewport(
@@ -155,21 +165,40 @@ public class GameScreen implements Screen {
 
     @Override
     public void render(float deltaTime) {
+        Vector3 mouse = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+        uiCamera.unproject(mouse);
+        float mx = mouse.x;
+        float my = mouse.y;
+        float bw = 200;
+        float bh = 150;
+        float bx = 230;
+        float by = 50;
+        float padX = 40f;
+        float padY = 35f;
+        Rectangle pauseButton = new Rectangle(bx + padX, by + padY, bw - padX * 2, bh - padY * 2);
+        boolean hoverPauseExit = pauseButton.contains(mx, my);
+
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
             gamePaused = !gamePaused;
             if (gamePaused) {
                 if (bgMusic != null) bgMusic.pause();
                 for (Enemy enemy : enemies) enemy.stopAllSounds();
+                jugadorPrincipal.stopAllSounds();
             } else {
                 if (bgMusic != null) bgMusic.play();
             }
         }
         if (gamePaused) {
+            Texture btn = hoverPauseExit ? pauseExitHover : pauseExit;
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
             batch.setProjectionMatrix(uiCamera.combined);
             batch.begin();
-            font.draw(batch, "JUEGO EN PAUSA",  275f, 250f);
+            batch.draw(btn, bx, by, bw, bh);
+            font.draw(batch, "JUEGO EN PAUSA",  270, 250);
             batch.end();
+            if (hoverPauseExit && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                game.setScreen(new MenuScreen(game));
+            }
             return;
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) toggleFullscreen();
@@ -184,6 +213,7 @@ public class GameScreen implements Screen {
             if (!deathRegistered) {
                 playerDeaths++;
                 deathRegistered = true;
+                saveStatsOnDeath();
             }
             if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
                 jugadorPrincipal.revivir();
@@ -211,6 +241,7 @@ public class GameScreen implements Screen {
             enemy.update(deltaTime, jugadorPrincipal);
             if (enemy.isDead() && !countEnemies.contains(enemy)){
                 enemiesKilled++;
+                pointsThisRun += getPointsForEnemy(enemy);
                 countEnemies.add(enemy);
                 int KILLS_PER_MESSAGE = 25;
                 if (!bossUnlocked && enemiesKilled % KILLS_PER_MESSAGE == 0) {
@@ -531,6 +562,7 @@ public class GameScreen implements Screen {
                             showingLevelScreen = true;
                             levelScreenTimer = 0f;
                             System.out.println("[DUNGEON] Completada");
+                            saveStatsOnCompletion();
                         }
                     }
                     transitionState = GameScreen.TransitionState.FADING_OUT;
@@ -559,6 +591,61 @@ public class GameScreen implements Screen {
             tries++;
         }
         jugadorPrincipal.resetPosition(x, y);
+    }
+
+    private int getPointsForEnemy(Enemy enemy) {
+        if (enemy instanceof Diablo)   return 15000;
+        if (enemy instanceof Amongus)  return 1000;
+        if (enemy instanceof Skeleton) return 500;
+        if (enemy instanceof Goomba)   return 100;
+        return 0;
+    }
+
+    private void saveStatsOnDeath() {
+        if (SessionManager.localId == null || SessionManager.localId.isEmpty()) return;
+        SessionManager.deaths += playerDeaths;
+        SessionManager.enemiesKilled += enemiesKilled;
+        SessionManager.points += pointsThisRun;
+        SessionManager.saveSession();
+        new Thread(() -> {
+            try {
+                firebase.FirebaseFirestoreService.updateStats(
+                    SessionManager.localId,
+                    SessionManager.enemiesKilled,
+                    SessionManager.deaths,
+                    SessionManager.gamesCompleted,
+                    SessionManager.points
+                );
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private void saveStatsOnCompletion() {
+        if (SessionManager.localId == null || SessionManager.localId.isEmpty()) return;
+        SessionManager.deaths += playerDeaths;
+        SessionManager.enemiesKilled += enemiesKilled;
+        SessionManager.gamesCompleted += 1;
+        SessionManager.points += pointsThisRun;
+        SessionManager.lastCompletedDate = LocalDate.now().toString();
+        SessionManager.saveSession();
+        new Thread(() -> {
+            try {
+                firebase.FirebaseFirestoreService.updateStats(
+                    SessionManager.localId,
+                    SessionManager.enemiesKilled,
+                    SessionManager.deaths,
+                    SessionManager.gamesCompleted,
+                    SessionManager.points
+                );
+                firebase.FirebaseFirestoreService.updateLastCompleted(
+                    SessionManager.localId
+                );
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     @Override

@@ -35,19 +35,12 @@ public class MenuScreen implements Screen {
     private Texture complemento;
     private Animation<TextureRegion> complementoAnim;
     private float animationTimer;
-
     private List<MenuButton> buttons;
-    private boolean fullscreen = false;
 
     private boolean showingDevMessage = false;
-    private float devMessageTimer = 0f;
-    private final float DEV_MESSAGE_DURATION = 3f;
+    private boolean fullscreen = false;
 
-    private int buttonsX = 50;
-    private int buttonsY = 250;
-    private int separation = 55;
-    private int buttonsHeight = 40;
-    private int buttonsWidth = 230;
+    private float devMessageTimer = 0f;
 
     public MenuScreen(Main game) {
         this.game = game;
@@ -99,27 +92,37 @@ public class MenuScreen implements Screen {
         }
         complementoAnim = new Animation<>(0.12f, frames);
         animationTimer = 0f;
-
         buttons = new ArrayList<>();
+
+        int buttonsX = 50;
+        int buttonsY = 250;
+        int buttonsWidth = 230;
+        int buttonsHeight = 40;
+
         buttons.add(new MenuButton(
-            new Texture("pantalla/jugar.png"),
-            new Texture("pantalla/jugar_hover.png"),
-            buttonsX,buttonsY,buttonsWidth,buttonsHeight, 230, 170,
+            new Texture("pantalla/botons/jugar.png"),
+            new Texture("pantalla/botons/jugar_hover.png"),
+            buttonsX, buttonsY, buttonsWidth, buttonsHeight, 230, 170,
             () ->{
                 System.out.println("JUGAR");
+                menuMusic.pause();
                 game.setScreen(new GameScreen(game));
             }
         ));
+        int separation = 55;
         buttons.add(new MenuButton(
-            new Texture("pantalla/puntuacion.png"),
-            new Texture("pantalla/puntuacion_hover.png"),
+            new Texture("pantalla/botons/puntuacion.png"),
+            new Texture("pantalla/botons/puntuacion_hover.png"),
             buttonsX, buttonsY - separation, buttonsWidth, buttonsHeight, 230, 170,
-            () -> System.out.println("PUNTUACIÓN GLOBAL")
+            () -> {
+                menuMusic.pause();
+                System.out.println("PUNTUACIÓN GLOBAL");
+            }
         ));
 
         buttons.add(new MenuButton(
-            new Texture("pantalla/ajustes.png"),
-            new Texture("pantalla/ajustes_hover.png"),
+            new Texture("pantalla/botons/ajustes.png"),
+            new Texture("pantalla/botons/ajustes_hover.png"),
             buttonsX, buttonsY - separation * 2, buttonsWidth, buttonsHeight, 230, 170,
             () -> {
                 System.out.println("AJUSTES");
@@ -129,31 +132,41 @@ public class MenuScreen implements Screen {
         ));
 
         buttons.add(new MenuButton(
-            new Texture("pantalla/creditos.png"),
-            new Texture("pantalla/creditos_hover.png"),
+            new Texture("pantalla/botons/creditos.png"),
+            new Texture("pantalla/botons/creditos_hover.png"),
             buttonsX, buttonsY - separation * 3, buttonsWidth, buttonsHeight, 230, 170,
             () -> {
                 System.out.println("CRÉDITOS");
+                menuMusic.pause();
                 game.setScreen(new CreditsScreen(game));
             }
         ));
 
         buttons.add(new MenuButton(
-            new Texture("pantalla/salir.png"),
-            new Texture("pantalla/salir_hover.png"),
+            new Texture("pantalla/botons/salir.png"),
+            new Texture("pantalla/botons/salir_hover.png"),
             buttonsX, buttonsY - separation * 4, buttonsWidth, buttonsHeight, 230, 170,
             () -> Gdx.app.exit()
+        ));
+
+        buttons.add(new MenuButton(
+            new Texture("pantalla/botons/usuario.png"),
+            new Texture("pantalla/botons/usuario_hover.png"),
+            380, 420, buttonsWidth, buttonsHeight, 230, 170,
+            () -> {
+                menuMusic.pause();
+                game.setScreen(new UserScreen(game));
+            }
         ));
     }
 
     @Override
     public void render(float delta) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) toggleFullscreen();
         backgroundTimer += delta;
         animationTimer += delta;
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) toggleFullscreen();
 
         camera.update();
         mouse = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
@@ -211,6 +224,7 @@ public class MenuScreen implements Screen {
             float ty = 460f;
             font.draw(game.batch, layout, tx, ty);
 
+            float DEV_MESSAGE_DURATION = 3f;
             if (devMessageTimer >= DEV_MESSAGE_DURATION) {
                 showingDevMessage = false;
                 devMessageTimer = 0f;
@@ -229,25 +243,13 @@ public class MenuScreen implements Screen {
     }
 
     @Override
-    public void resize(int width, int height) {
-
-    }
-
+    public void resize(int width, int height) {}
     @Override
-    public void pause() {
-
-    }
-
+    public void pause() {}
     @Override
-    public void resume() {
-
-    }
-
+    public void resume() {}
     @Override
-    public void hide() {
-
-    }
-
+    public void hide() {}
     @Override
     public void dispose() {
         background.dispose();

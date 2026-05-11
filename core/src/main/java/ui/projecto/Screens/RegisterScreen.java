@@ -8,21 +8,25 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.google.gson.Gson;
 import firebase.FirebaseAuthService;
 import firebase.FirebaseFirestoreService;
+import firebase.SessionManager;
 import ui.projecto.Main;
+
+import java.time.LocalDate;
 
 public class RegisterScreen implements Screen {
     private final Main game;
     private BitmapFont font;
 
     private String message = "";
+    private StringBuilder username;
     private StringBuilder email;
     private StringBuilder password;
 
-    private boolean editingEmail = true;
+    private int selectedField = 0;
     private boolean fullscreen = false;
 
     private float messageTimer = 0f;
-    private final float MESSAGE_DURATION = 2.5f;
+    private final float MESSAGE_DURATION = 3f;
 
     public RegisterScreen(Main game) {
         this.game = game;
@@ -31,6 +35,7 @@ public class RegisterScreen implements Screen {
     @Override
     public void show() {
         font = new BitmapFont();
+        username = new StringBuilder();
         email = new StringBuilder();
         password = new StringBuilder();
         Gdx.input.setInputProcessor(new com.badlogic.gdx.InputAdapter() {
@@ -40,10 +45,16 @@ public class RegisterScreen implements Screen {
                     character == '\n' ||
                     character == '\r' ||
                     character == '\b') return false;
-                if (editingEmail) {
-                    email.append(character);
-                } else {
-                    password.append(character);
+                switch (selectedField) {
+                    case 0:
+                        username.append(character);
+                        break;
+                    case 1:
+                        email.append(character);
+                        break;
+                    case 2:
+                        password.append(character);
+                        break;
                 }
                 return true;
             }
@@ -61,10 +72,12 @@ public class RegisterScreen implements Screen {
         font.draw(game.batch, "TAB = cambiar campo", 210, 300);
         font.draw(game.batch, "ENTER = crear cuenta", 210, 270);
 
-        String emailText = (editingEmail ? "> " : "") + "Email: " + email;
-        String passwordText = (!editingEmail ? "> " : "") + "Password: " + "*".repeat(password.length());
+        String usernameText = (selectedField == 0 ? "> " : "") + "Username: " + username;
+        String emailText = (selectedField == 1 ? "> " : "") + "Email: " + email;
+        String passwordText = (selectedField == 2 ? "> " : "") + "Password: " + "*".repeat(password.length());
 
-        font.draw(game.batch, emailText, 120, 200);
+        font.draw(game.batch, usernameText, 120, 220);
+        font.draw(game.batch, emailText, 120, 190);
         font.draw(game.batch, passwordText, 120, 160);
         font.draw(game.batch, message, 120, 100);
 
@@ -82,29 +95,51 @@ public class RegisterScreen implements Screen {
     private void handleInput() {
         if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) toggleFullscreen();
         if (Gdx.input.isKeyJustPressed(Input.Keys.TAB)) {
-            editingEmail = !editingEmail;
+            selectedField++;
+            if (selectedField > 2) {
+                selectedField = 0;
+            }
         }
-
         if (Gdx.input.isKeyJustPressed(Input.Keys.BACKSPACE)) {
-            if (editingEmail && email.length() > 0) {
-                email.deleteCharAt(email.length() - 1);
-            }
-            if (!editingEmail && password.length() > 0) {
-                password.deleteCharAt(password.length() - 1);
+            switch (selectedField) {
+                case 0:
+                    if (username.length() > 0) {
+                        username.deleteCharAt(username.length() - 1);
+                    }
+                    break;
+                case 1:
+                    if (email.length() > 0) {
+                        email.deleteCharAt(email.length() - 1);
+                    }
+                    break;
+                case 2:
+                    if (password.length() > 0) {
+                        password.deleteCharAt(password.length() - 1);
+                    }
+                    break;
             }
         }
-
         if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
+            if (!validateInputs()) {
+                return;
+            }
             message = "Creando cuenta...";
             String response = FirebaseAuthService.register(
                 email.toString(),
                 password.toString()
             );
             if (response != null && response.contains("idToken")) {
-                message = "REGISTRO OK";
+                message = "REGISTRADO CORRECTAMENTE";
                 Gson gson = new Gson();
                 FirebaseRegisterResponse res = gson.fromJson(response, FirebaseRegisterResponse.class);
-                FirebaseFirestoreService.createUserProfile(res.localId, email.toString());
+                FirebaseFirestoreService.createUserProfile(res.localId, username.toString(), email.toString());
+                SessionManager.localId = res.localId;
+                SessionManager.email = res.email;
+                SessionManager.username = username.toString();
+                SessionManager.idToken = res.idToken;
+                SessionManager.registerDate = LocalDate.now().toString();
+                SessionManager.lastCompletedDate = "never";
+                SessionManager.saveSession();
                 new Thread(() -> {
                     try {
                         Thread.sleep(1000);
@@ -118,10 +153,29 @@ public class RegisterScreen implements Screen {
                 System.out.println(response);
             }
         }
-
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             game.setScreen(new StartScreen(game));
         }
+    }
+
+    private boolean validateInputs() {
+        String usernameText = username.toString().trim();
+        String emailText = email.toString().trim();
+        String passwordText = password.toString();
+        if (usernameText.length() < 3) {
+            message = "Username minimo 3 caracteres";
+            return false;
+        }
+        if (!emailText.contains("@") ||
+            !emailText.contains(".")) {
+            message = "Email invalido";
+            return false;
+        }
+        if (passwordText.length() < 6) {
+            message = "Password minimo 6 caracteres";
+            return false;
+        }
+        return true;
     }
 
     private void toggleFullscreen() {
