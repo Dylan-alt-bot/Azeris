@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="50" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="16" nextobjectid="43">
+<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="50" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="16" nextobjectid="45">
  <tileset firstgid="1" source="../tilesets/Paredes2.tsx"/>
  <tileset firstgid="494" source="../tilesets/puertas.tsx"/>
  <tileset firstgid="498" source="../tilesets/player.tsx"/>
@@ -10,6 +10,7 @@
  <tileset firstgid="1645" source="../tilesets/skeleton.tsx"/>
  <tileset firstgid="1647" source="../tilesets/goomba.tsx"/>
  <tileset firstgid="1648" source="../tilesets/Fuegos.tsx"/>
+ <tileset firstgid="1846" source="../tilesets/azeris.tsx"/>
  <group id="2" name="Room">
   <layer id="1" name="Fondo" width="50" height="40">
    <data encoding="csv">
@@ -420,6 +421,8 @@
    <object id="18" gid="1643" x="589.667" y="339.667" width="18" height="18"/>
    <object id="19" gid="1643" x="383" y="142.333" width="18" height="18"/>
    <object id="20" gid="1643" x="384.333" y="533" width="18" height="18"/>
+   <object id="43" gid="1846" x="380" y="248" width="21" height="21"/>
+   <object id="44" gid="1846" x="692.667" y="559" width="21" height="21"/>
   </objectgroup>
   <objectgroup id="11" name="Entities">
    <object id="21" gid="1644" x="257" y="288.333" width="30" height="30"/>

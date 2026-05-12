@@ -12,8 +12,7 @@ public class FirebaseAuthService {
 
     public static String login(String email, String password) {
         try {
-            URL url = new URL("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key="
-            + API_KEY);
+            URL url = new URL("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + API_KEY);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
@@ -46,33 +45,37 @@ public class FirebaseAuthService {
 
     public static String register(String email, String password) {
         try {
-            URL url = new URL("https://identitytoolkit.googleapis.com/v1/accounts:signUp?key="
-                    + API_KEY);
+            URL url = new URL("https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=" + API_KEY);
 
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
-
             conn.setDoInput(true);
             conn.setDoOutput(true);
-            String body = "{"
-                + "\"email\":\"" + email + "\","
-                + "\"password\":\"" + password + "\","
-                + "\"returnSecureToken\":true"
+            String body =
+                "{"
+                    + "\"email\":\"" + email + "\","
+                    + "\"password\":\"" + password + "\","
+                    + "\"returnSecureToken\":true"
                 + "}";
 
             OutputStream os = conn.getOutputStream();
             os.write(body.getBytes());
             os.close();
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            int code = conn.getResponseCode();
+            BufferedReader br;
+            if (code >= 200 && code < 300) {
+                br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            } else {
+                br = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+            }
             StringBuilder response = new StringBuilder();
             String line;
-
             while ((line = br.readLine()) != null) {
                 response.append(line);
             }
+            System.out.println("[REGISTER] CODE: " + code);
+            System.out.println("[REGISTER] RESPONSE: " + response);
             return response.toString();
         } catch (Exception e) {
             e.printStackTrace();
@@ -80,34 +83,47 @@ public class FirebaseAuthService {
         }
     }
 
-    public static void deleteAccount(String idToken) {
+    public static boolean deleteAccount(String idToken) {
         try {
-            URL url = new URL(
-                "https://identitytoolkit.googleapis.com/v1/accounts:delete?key="
-                    + API_KEY
-            );
-
+            URL url = new URL("https://identitytoolkit.googleapis.com/v1/accounts:delete?key=" + API_KEY);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoInput(true);
             conn.setDoOutput(true);
 
-            String body = "{ \"idToken\": \"" + idToken + "\" }";
+            String body = "{\"idToken\":\"" + idToken + "\"}";
             OutputStream os = conn.getOutputStream();
             os.write(body.getBytes());
             os.close();
-            System.out.println("Auth delete: " + conn.getResponseCode());
+
+            int code = conn.getResponseCode();
+
+            BufferedReader br;
+            if (code >= 200 && code < 300) {
+                br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            } else {
+                br = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+            }
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) response.append(line);
+            br.close();
+
+            System.out.println("[AUTH] deleteAccount code: " + code);
+            System.out.println("[AUTH] deleteAccount response: " + response);
+
+            return code == 200;
+
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
     }
 
     public static boolean sendPasswordReset(String email) {
         try {
-            URL url = new URL(
-                "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key="
-                    + API_KEY
-            );
+            URL url = new URL("https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=" + API_KEY);
             HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");

@@ -12,6 +12,7 @@ public class SessionManager {
     public static String registerDate;
     public static String lastCompletedDate;
 
+    public static int bestTime;
     public static int enemiesKilled;
     public static int deaths;
     public static int gamesCompleted;
@@ -32,6 +33,7 @@ public class SessionManager {
         prefs.putString("registerDate", registerDate != null ? registerDate : "");
         prefs.putString("lastCompletedDate", lastCompletedDate != null ? lastCompletedDate : "");
 
+        prefs.putInteger("bestTime", bestTime);
         prefs.putInteger("enemiesKilled", enemiesKilled);
         prefs.putInteger("deaths", deaths);
         prefs.putInteger("gamesCompleted", gamesCompleted);
@@ -52,6 +54,7 @@ public class SessionManager {
         registerDate = prefs.getString("registerDate", "");
         lastCompletedDate = prefs.getString("lastCompletedDate", "");
 
+        bestTime = prefs.getInteger("bestTime", 0);
         enemiesKilled = prefs.getInteger("enemiesKilled", 0);
         deaths = prefs.getInteger("deaths", 0);
         gamesCompleted = prefs.getInteger("gamesCompleted", 0);
@@ -67,6 +70,7 @@ public class SessionManager {
         username = null;
         idToken = null;
 
+        bestTime = 0;
         enemiesKilled = 0;
         deaths = 0;
         gamesCompleted = 0;

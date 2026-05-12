@@ -117,17 +117,19 @@ public class UserScreen implements Screen {
         shape.end();
 
         game.batch.begin();
-        game.batch.draw(avatar, 120, 175, 100, 120);
+        game.batch.draw(avatar, -10, 40, 300, 370);
         game.batch.draw(hoverLogout ? logoutBtnHover : logoutBtn, 220, 50, 200, 135);
         game.batch.draw(hoverDelete ? deleteBtnHover : deleteBtn, 220, 0, 200, 130);
-        font.draw(game.batch, "USERNAME: " + SessionManager.username, 250, 370);
-        font.draw(game.batch, "EMAIL: " + SessionManager.email, 250, 345);
-        font.draw(game.batch, "ENEMIES KILLED: " + SessionManager.enemiesKilled, 250, 300);
-        font.draw(game.batch, "DEATHS: " + SessionManager.deaths, 250, 275);
-        font.draw(game.batch, "GAMES COMPLETED: " + SessionManager.gamesCompleted, 250, 250);
-        font.draw(game.batch, "POINTS: " + SessionManager.points, 250, 225);
-        font.draw(game.batch, "REGISTERED: " + SessionManager.registerDate, 250, 200);
-        font.draw(game.batch, "LAST COMPLETED: " + SessionManager.lastCompletedDate, 250, 175);
+        font.draw(game.batch, "USERNAME: " + SessionManager.username, 250, 380);
+        font.draw(game.batch, "EMAIL: " + SessionManager.email, 250, 355);
+        font.draw(game.batch, "ENEMIES KILLED: " + SessionManager.enemiesKilled, 250, 310);
+        font.draw(game.batch, "DEATHS: " + SessionManager.deaths, 250, 285);
+        font.draw(game.batch, "GAMES COMPLETED: " + SessionManager.gamesCompleted, 250, 260);
+        font.draw(game.batch, "POINTS: " + SessionManager.points, 250, 235);
+        font.draw(game.batch, "REGISTERED: " + SessionManager.registerDate, 250, 210);
+        font.draw(game.batch, "LAST COMPLETED: " + SessionManager.lastCompletedDate, 250, 185);
+        String tiempoMostrar = SessionManager.bestTime > 0 ? formatTime(SessionManager.bestTime) : "Sin récord";
+        font.draw(game.batch, "BEST TIME: " + tiempoMostrar, 250, 160);
         font.draw(game.batch, "ESC = volver", 100, 110);
 
         game.batch.end();
@@ -162,16 +164,20 @@ public class UserScreen implements Screen {
     }
 
     private void deleteAccount() {
-        String userId = SessionManager.localId;
+        String userId  = SessionManager.localId;
         String idToken = SessionManager.idToken;
 
         new Thread(() -> {
             FirebaseFirestoreService.deleteUserProfile(userId);
-            FirebaseAuthService.deleteAccount(idToken);
+            boolean authDeleted = FirebaseAuthService.deleteAccount(idToken);
+
+            if (!authDeleted) {
+                System.out.println("[ERROR] No se pudo borrar la cuenta de Firebase Auth");
+            } else {
+                System.out.println("[AUTH] Cuenta borrada correctamente de Firebase Auth");
+            }
             SessionManager.clear();
-            Gdx.app.postRunnable(() ->
-                game.setScreen(new StartScreen(game))
-            );
+            Gdx.app.postRunnable(() -> game.setScreen(new StartScreen(game)));
         }).start();
     }
 
@@ -187,6 +193,14 @@ public class UserScreen implements Screen {
             Gdx.graphics.setWindowedMode(640, 480);
         }
         fullscreen = !fullscreen;
+    }
+
+    private String formatTime(int seconds) {
+        int h = seconds / 3600;
+        int m = (seconds % 3600) / 60;
+        int s = seconds % 60;
+        if (h > 0) return String.format("%dh %02dm %02ds", h, m, s);
+        return String.format("%02dm %02ds", m, s);
     }
 
     @Override public void resize(int width, int height) {}

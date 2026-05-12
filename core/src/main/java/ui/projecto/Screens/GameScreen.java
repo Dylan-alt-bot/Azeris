@@ -83,6 +83,7 @@ public class GameScreen implements Screen {
     private int playerDeaths = 0;
     private int pointsThisRun = 0;
     private final Set<Enemy> countEnemies = new HashSet<>();
+    private float gameTimer = 0f;
 
     private boolean gamePaused = false;
     private boolean deathRegistered = false;
@@ -203,6 +204,9 @@ public class GameScreen implements Screen {
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) toggleFullscreen();
         deltaTime = Gdx.graphics.getDeltaTime();
+        if (!gamePaused && !jugadorPrincipal.getVida().isMuerto()) {
+            gameTimer += deltaTime;
+        }
         updateTransition(deltaTime);
         boolean blockUpdate = isTransitioning;
         if (!blockUpdate) {
@@ -624,12 +628,18 @@ public class GameScreen implements Screen {
 
     private void saveStatsOnCompletion() {
         if (SessionManager.localId == null || SessionManager.localId.isEmpty()) return;
-        SessionManager.deaths += playerDeaths;
-        SessionManager.enemiesKilled += enemiesKilled;
+        SessionManager.deaths         += playerDeaths;
+        SessionManager.enemiesKilled  += enemiesKilled;
         SessionManager.gamesCompleted += 1;
-        SessionManager.points += pointsThisRun;
-        SessionManager.lastCompletedDate = LocalDate.now().toString();
+        SessionManager.points         += pointsThisRun;
+        SessionManager.lastCompletedDate = java.time.LocalDate.now().toString();
+        int tiempoSegundos = (int) gameTimer;
+        if (SessionManager.bestTime == 0 || tiempoSegundos < SessionManager.bestTime) {
+            SessionManager.bestTime = tiempoSegundos;
+            System.out.println("[TIMER] Nuevo récord: " + formatTime(tiempoSegundos));
+        }
         SessionManager.saveSession();
+        final int bestTimeSnapshot = SessionManager.bestTime;
         new Thread(() -> {
             try {
                 firebase.FirebaseFirestoreService.updateStats(
@@ -639,13 +649,18 @@ public class GameScreen implements Screen {
                     SessionManager.gamesCompleted,
                     SessionManager.points
                 );
-                firebase.FirebaseFirestoreService.updateLastCompleted(
-                    SessionManager.localId
-                );
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+                firebase.FirebaseFirestoreService.updateLastCompleted(SessionManager.localId);
+                firebase.FirebaseFirestoreService.updateBestTime(SessionManager.localId, bestTimeSnapshot);
+            } catch (Exception e) { e.printStackTrace(); }
         }).start();
+    }
+
+    private String formatTime(int seconds) {
+        int h = seconds / 3600;
+        int m = (seconds % 3600) / 60;
+        int s = seconds % 60;
+        if (h > 0) return String.format("%dh %02dm %02ds", h, m, s);
+        return String.format("%02dm %02ds", m, s);
     }
 
     @Override

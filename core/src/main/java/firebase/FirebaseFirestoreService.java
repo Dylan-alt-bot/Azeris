@@ -17,32 +17,48 @@ public class FirebaseFirestoreService {
         try {
             URL url = new URL(
                 "https://firestore.googleapis.com/v1/projects/"
-                + PROJECT_ID +
-                    "/databases/(default)/documents/players?documentId="
-                + userId
+                    + PROJECT_ID
+                    + "/databases/(default)/documents/players?documentId="
+                    + userId
             );
             HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-type", "application/json");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoInput(true);
             conn.setDoOutput(true);
+
             String today = LocalDate.now().toString();
             String json =
                 "{ \"fields\": {"
-                    + "\"username\": {\"stringValue\": \"" + username + "\"},"
-                    + "\"email\": {\"stringValue\": \"" + email + "\"},"
-                    + "\"registerDate\": {\"stringValue\": \"" + today + "\"},"
+                    + "\"username\": {\"stringValue\": \""  + username + "\"},"
+                    + "\"email\": {\"stringValue\": \""  + email    + "\"},"
+                    + "\"registerDate\": {\"stringValue\": \""  + today    + "\"},"
                     + "\"lastCompletedDate\": {\"stringValue\": \"never\"},"
                     + "\"enemiesKilled\": {\"integerValue\": \"0\"},"
                     + "\"deaths\": {\"integerValue\": \"0\"},"
                     + "\"gamesCompleted\": {\"integerValue\": \"0\"},"
-                    + "\"points\": {\"integerValue\": \"0\"}"
+                    + "\"points\": {\"integerValue\": \"0\"},"
+                    + "\"bestTime\": {\"integerValue\": \"0\"}"
                     + "} }";
+
             OutputStream os = conn.getOutputStream();
             os.write(json.getBytes());
             os.close();
 
-            int responseCode = conn.getResponseCode();
-            System.out.println("Firebase response: " + responseCode);
+            int code = conn.getResponseCode();
+            BufferedReader br;
+            if (code >= 200 && code < 300) {
+                br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            } else {
+                br = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+            }
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) response.append(line);
+            br.close();
+
+            System.out.println("[FIRESTORE] createUserProfile code: " + code);
+            System.out.println("[FIRESTORE] createUserProfile response: " + response);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -86,10 +102,11 @@ public class FirebaseFirestoreService {
             SessionManager.email = safeGet(fields, "email", "NO EMAIL");
             SessionManager.registerDate = safeGet(fields, "registerDate", "unknown");
             SessionManager.lastCompletedDate = safeGet(fields, "lastCompletedDate", "never");
-            SessionManager.enemiesKilled = Integer.parseInt(safeGet(fields, "enemiesKilled", "0"));
+            SessionManager.bestTime = Integer.parseInt(safeGet(fields, "bestTime", "0"));
             SessionManager.deaths = Integer.parseInt(safeGet(fields, "deaths", "0"));
             SessionManager.gamesCompleted = Integer.parseInt(safeGet(fields, "gamesCompleted", "0"));
             SessionManager.points = Integer.parseInt(safeGet(fields, "points", "0"));
+            SessionManager.enemiesKilled = Integer.parseInt(safeGet(fields, "enemiesKilled", "0"));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -139,7 +156,8 @@ public class FirebaseFirestoreService {
                     + "&updateMask.fieldPaths=points"
             );
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("PATCH");
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("X-HTTP-Method-Override", "PATCH");
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setDoOutput(true);
 
@@ -153,6 +171,20 @@ public class FirebaseFirestoreService {
             OutputStream os = conn.getOutputStream();
             os.write(json.getBytes());
             os.close();
+
+            int code = conn.getResponseCode();
+            BufferedReader br;
+            if (code >= 200 && code < 300) {
+                br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            } else {
+                br = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+            }
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) response.append(line);
+            br.close();
+
+            System.out.println(response);
             System.out.println("[STATS] Firestore update: " + conn.getResponseCode());
         } catch (Exception e) {
             e.printStackTrace();
@@ -170,7 +202,8 @@ public class FirebaseFirestoreService {
                     "?updateMask.fieldPaths=lastCompletedDate"
             );
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("PATCH");
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("X-HTTP-Method-Override", "PATCH");
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setDoOutput(true);
             String json =
@@ -181,6 +214,37 @@ public class FirebaseFirestoreService {
             os.write(json.getBytes());
             os.close();
             System.out.println("Updated lastCompletedDate: " + conn.getResponseCode());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void updateBestTime(String userId, int bestTime) {
+        try {
+            URL url = new URL(
+                "https://firestore.googleapis.com/v1/projects/"
+                    + PROJECT_ID +
+                    "/databases/(default)/documents/players/"
+                    + userId +
+                    "?updateMask.fieldPaths=bestTime"
+            );
+
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("X-HTTP-Method-Override", "PATCH");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
+
+            String json =
+                "{ \"fields\": {"
+                    + "\"bestTime\": {\"integerValue\": \"" + bestTime + "\"}"
+                    + "} }";
+
+            OutputStream os = conn.getOutputStream();
+            os.write(json.getBytes());
+            os.close();
+            System.out.println("[STATS] bestTime updated: " + conn.getResponseCode());
         } catch (Exception e) {
             e.printStackTrace();
         }

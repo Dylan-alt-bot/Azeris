@@ -149,8 +149,16 @@ public class RegisterScreen implements Screen {
                     } catch (Exception e) {}
                 }).start();
             } else {
-                message = "ERROR REGISTRANDO";
-                System.out.println(response);
+                if (response != null && response.contains("EMAIL_EXISTS")) {
+                    message = "Ese email ya está registrado";
+                } else if (response != null && response.contains("INVALID_EMAIL")) {
+                    message = "Formato de email invalido";
+                } else if (response != null && response.contains("WEAK_PASSWORD")) {
+                    message = "Password demasiado debil (min. 6 caracteres)";
+                } else {
+                    message = "Error al registrar, intentalo de nuevo";
+                }
+                System.out.println("[REGISTER ERROR] " + response);
             }
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {

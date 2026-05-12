@@ -116,7 +116,7 @@ public class MenuScreen implements Screen {
             buttonsX, buttonsY - separation, buttonsWidth, buttonsHeight, 230, 170,
             () -> {
                 menuMusic.pause();
-                System.out.println("PUNTUACIÓN GLOBAL");
+                Gdx.net.openURI("https://frontend-azeris.vercel.app/azeris/points");
             }
         ));
 
@@ -125,7 +125,6 @@ public class MenuScreen implements Screen {
             new Texture("pantalla/botons/ajustes_hover.png"),
             buttonsX, buttonsY - separation * 2, buttonsWidth, buttonsHeight, 230, 170,
             () -> {
-                System.out.println("AJUSTES");
                 showingDevMessage = true;
                 devMessageTimer = 0f;
             }

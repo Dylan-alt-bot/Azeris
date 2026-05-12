@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="50" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="13" nextobjectid="45">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="50" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="13" nextobjectid="49">
  <tileset firstgid="1" source="../tilesets/Paredes2.tsx"/>
  <tileset firstgid="494" source="../tilesets/puertas.tsx"/>
  <tileset firstgid="498" source="../tilesets/Fuegos.tsx"/>
@@ -13,6 +13,7 @@
  <tileset firstgid="1775" source="../tilesets/goomba.tsx"/>
  <tileset firstgid="1776" source="../tilesets/pedestals.tsx"/>
  <tileset firstgid="2146" source="../tilesets/amongus.tsx"/>
+ <tileset firstgid="2147" source="../tilesets/azeris.tsx"/>
  <group id="8" name="Room">
   <layer id="7" name="Retoques Suelo Inferior" width="50" height="40">
    <data encoding="csv">
@@ -401,6 +402,10 @@
    <object id="36" gid="1775" x="313" y="168" width="16" height="16"/>
    <object id="37" gid="1775" x="579" y="508" width="16" height="16"/>
    <object id="43" gid="1772" x="65.5" y="121.5" width="18" height="18"/>
+   <object id="45" gid="1772" x="433" y="160" width="18" height="18"/>
+   <object id="46" gid="1772" x="310" y="466" width="18" height="18"/>
+   <object id="47" gid="2147" x="673" y="137" width="21" height="21"/>
+   <object id="48" gid="2147" x="275" y="340" width="21" height="21"/>
   </objectgroup>
   <objectgroup id="9" name="Player">
    <object id="1" gid="1771" x="702" y="373" width="64" height="64"/>
