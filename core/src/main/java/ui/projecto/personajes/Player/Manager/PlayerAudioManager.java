@@ -37,7 +37,7 @@ public class PlayerAudioManager {
     }
 
     public void playAttack(){
-        attack.play(0.3f);
+        attack.play(0.6f);
     }
 
     public void playSprint(){

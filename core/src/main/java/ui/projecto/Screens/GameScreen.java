@@ -159,7 +159,7 @@ public class GameScreen implements Screen {
         this.glProfiler.enable();
 
         bgMusic = Gdx.audio.newMusic(Gdx.files.internal("audio/music/musicIssac.mp3"));
-        bgMusic.setVolume(0.23f);
+        bgMusic.setVolume(0.03f);
         bgMusic.setLooping(true);
         bgMusic.play();
     }
@@ -179,7 +179,7 @@ public class GameScreen implements Screen {
         Rectangle pauseButton = new Rectangle(bx + padX, by + padY, bw - padX * 2, bh - padY * 2);
         boolean hoverPauseExit = pauseButton.contains(mx, my);
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             gamePaused = !gamePaused;
             if (gamePaused) {
                 if (bgMusic != null) bgMusic.pause();
