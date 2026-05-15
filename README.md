@@ -1,33 +1,80 @@
-# Azeris
+# Azeris — Proyecto Final de Curso
 
-A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://github.com/libgdx/gdx-liftoff).
+## Descripción
 
-This project was generated with a template including simple application launchers and an `ApplicationAdapter` extension that draws libGDX logo.
+Este proyecto es un videojuego **de explorador de mazmorras rougelite** llamado **Azeris**. Esta desarrollado en **Java** utilizando el framework **LibGDX** dentro del entorno de desarrollo **IntelliJ IDEA**.
 
-## Platforms
+Azeris combina mecánicas clásicas de exploración de mazmorras, combate y progresión del jugador. Además del videojuego, el proyecto incluye integración con servicios web modernos para la recopilación y visualización de datos.
 
-- `core`: Main module with the application logic shared by all platforms.
-- `lwjgl3`: Primary desktop platform using LWJGL3; was called 'desktop' in older docs.
+Los datos generados durante las partidas se almacenan en **Firebase**, permitiendo posteriormente mostrarlos en una página web desplegada en **Vercel**, desde donde también es posible descargar e instalar el juego.
 
-## Gradle
+---
 
-This project uses [Gradle](https://gradle.org/) to manage dependencies.
-The Gradle wrapper was included, so you can run Gradle tasks using `gradlew.bat` or `./gradlew` commands.
-Useful Gradle tasks and flags:
+## Características principales
 
-- `--continue`: when using this flag, errors will not stop the tasks from running.
-- `--daemon`: thanks to this flag, Gradle daemon will be used to run chosen tasks.
-- `--offline`: when using this flag, cached dependency archives will be used.
-- `--refresh-dependencies`: this flag forces validation of all dependencies. Useful for snapshot versions.
-- `build`: builds sources and archives of every project.
-- `cleanEclipse`: removes Eclipse project data.
-- `cleanIdea`: removes IntelliJ project data.
-- `clean`: removes `build` folders, which store compiled classes and built archives.
-- `eclipse`: generates Eclipse project data.
-- `idea`: generates IntelliJ project data.
-- `lwjgl3:jar`: builds application's runnable jar, which can be found at `lwjgl3/build/libs`.
-- `lwjgl3:run`: starts the application.
-- `test`: runs unit tests (if any).
+- Exploración de mazmorras en vista top-down
+- Sistema de combate en tiempo real
+- Recolección y almacenamiento de estadísticas
+- Integración con Firebase
+- Página web conectada al backend del juego
+- Descarga e instalación del juego desde la web
+- Arquitectura modular utilizando LibGDX
 
-Note that most tasks that are not specific to a single project can be run with `name:` prefix, where the `name` should be replaced with the ID of a specific project.
-For example, `core:clean` removes `build` folder only from the `core` project.
+---
+
+## Tecnologías utilizadas
+
+### Desarrollo del videojuego
+- **Java**
+- **LibGDX**
+- **IntelliJ IDEA**
+- **Gradle**
+
+### Backend y almacenamiento
+- **Firebase**
+    - Firestore / Realtime Database
+
+### Desarrollo web
+- **Vue y Ionic**
+- **Vercel** para despliegue web
+
+---
+
+## Integración con Firebase
+
+El proyecto utiliza Firebase para almacenar información relacionada con las partidas y estadísticas de los jugadores. Esto permite:
+
+- Registrar datos de juego
+- Mostrar estadísticas en tiempo real a traves de la pagina web oficial
+- Centralizar información en la nube
+- Conectar el videojuego con la plataforma web
+
+---
+
+## Plataforma web
+
+La página web asociada al proyecto está desplegada en Vercel y permite:
+
+- Visualizar datos recopilados desde Firebase
+- Mostrar estadísticas del videojuego
+- Descargar e instalar el juego
+- Servir como plataforma de presentación del proyecto
+
+---
+
+## Público objetivo
+
+Este proyecto está dirigido principalmente a:
+
+- El tribunal del proyecto
+- Estudiantes interesados en desarrollo de videojuegos
+- Personas interesadas en Java y LibGDX
+- Usuarios que disfrutan de juegos dungeon crawler clásicos
+
+---
+
+## Cómo ejecutar el proyecto
+
+### Instalación
+
+- TODO: Detallar instalacion de Azeris.exe

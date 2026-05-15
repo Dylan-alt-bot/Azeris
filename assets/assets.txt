@@ -77,8 +77,13 @@ maps/mapas/Mapa15.tmx
 maps/mapas/Mapa16.tmx
 maps/mapas/Mapa17.tmx
 maps/mapas/Mapa18.tmx
+maps/mapas/Mapa19.tmx
 maps/mapas/Mapa2.tmx
+maps/mapas/Mapa20.tmx
+maps/mapas/Mapa21.tmx
+maps/mapas/Mapa22.tmx
 maps/mapas/Mapa23.tmx
+maps/mapas/Mapa24.tmx
 maps/mapas/Mapa25.tmx
 maps/mapas/Mapa26.tmx
 maps/mapas/Mapa27.tmx
