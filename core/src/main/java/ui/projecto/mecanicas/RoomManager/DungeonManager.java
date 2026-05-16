@@ -15,7 +15,7 @@ public class DungeonManager {
     public DungeonManager() {
         normalRooms = new ArrayList<>();
         loadAllRooms();
-        bossRoom = new RoomData("maps/beta/finalboss.tmx", true);
+        bossRoom = new RoomData("maps/mapas/BossFinal.tmx", true);
         currentRoom = normalRooms.get(random.nextInt(normalRooms.size()));
         System.out.println("[DUNGEON] Dungeon iniciado con " + normalRooms.size() + " salas disponibles");
     }

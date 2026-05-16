@@ -25,6 +25,7 @@ audio/sfx/enemy/skeleton/skeletonRun.wav
 audio/sfx/enemy/skeleton/skeletonWalk.wav
 audio/sfx/extras/puerta.wav
 audio/sfx/player/attack.wav
+audio/sfx/player/celebrate.wav
 audio/sfx/player/dead.wav
 audio/sfx/player/hurt.wav
 audio/sfx/player/run.wav
@@ -58,6 +59,7 @@ enemy/skeleton/skeleton_caminando.png
 enemy/skeleton/skeleton_correr.png
 enemy/skeleton/skeleton_dolor.png
 enemy/skeleton/skeleton_muerte.png
+extras/ackxqman.png
 extras/cabeza_player.png
 extras/exit.png
 extras/exit_hover.png
@@ -67,6 +69,7 @@ maps/beta/finalboss.tmx
 maps/beta/mapabase.tmx
 maps/mapa_beta.png
 maps/mapabase.png
+maps/mapas/BossFinal.tmx
 maps/mapas/Mapa1.tmx
 maps/mapas/Mapa10.tmx
 maps/mapas/Mapa11.tmx
@@ -77,8 +80,13 @@ maps/mapas/Mapa15.tmx
 maps/mapas/Mapa16.tmx
 maps/mapas/Mapa17.tmx
 maps/mapas/Mapa18.tmx
+maps/mapas/Mapa19.tmx
 maps/mapas/Mapa2.tmx
+maps/mapas/Mapa20.tmx
+maps/mapas/Mapa21.tmx
+maps/mapas/Mapa22.tmx
 maps/mapas/Mapa23.tmx
+maps/mapas/Mapa24.tmx
 maps/mapas/Mapa25.tmx
 maps/mapas/Mapa26.tmx
 maps/mapas/Mapa27.tmx
@@ -149,11 +157,18 @@ pantalla/botons/usuario_hover.png
 pantalla/complemento.png
 pantalla/creditos_fondo.png
 pantalla/fondo.png
+pantalla/historia/final/1.png
+pantalla/historia/final/2.png
+pantalla/historia/final/3.png
+pantalla/historia/principio/1.png
+pantalla/historia/principio/2.png
+pantalla/historia/principio/3.png
 pantalla/sfx/fuego.wav
 pantalla/sfx/select.wav
 player/player.png
 player/player_atacando.png
 player/player_atacar.png
+player/player_celebrate.png
 player/player_corriendo.png
 player/player_dolor.png
 player/player_muerte.png

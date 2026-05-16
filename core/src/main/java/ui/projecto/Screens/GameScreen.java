@@ -39,7 +39,6 @@ import ui.projecto.personajes.Player.PlayerUI;
 import ui.projecto.personajes.Player.State.PlayerState;
 import ui.projecto.personajes.Player.Util.ConstantsPlayer;
 
-import java.time.LocalDate;
 import java.util.*;
 
 public class GameScreen implements Screen {
@@ -87,13 +86,10 @@ public class GameScreen implements Screen {
 
     private boolean gamePaused = false;
     private boolean deathRegistered = false;
-    private boolean fullscreen = false;
+    private boolean azerisCollected = false;
     private boolean showingLevelScreen = false;
-    private boolean hoverPauseExit = false;
-
     private TransitionState transitionState = GameScreen.TransitionState.NONE;
 
-    private int currentLevel = 1;
     private float levelScreenTimer = 0f;
     private final float LEVEL_SCREEN_DURATION = 2.5f;
     private String levelScreenText = "";
@@ -101,9 +97,17 @@ public class GameScreen implements Screen {
     private int bossKillThreshold;
     private boolean bossUnlocked = false;
     private boolean bossWarningShown = false;
-    private float bossWarningTimer = 0f;
+    private boolean endingFading = false;
+    private boolean bossDefeated = false;
     private final float BOSS_WARNING_DURATION = 3.0f;
-    private boolean azerisCollected = false;
+    private final float BOSS_DEFEATED_DELAY = 5.0f;
+    private final float ENDING_FADE_SPEED = 1.2f;
+    private float bossWarningTimer = 0f;
+    private float bossDefeatedTimer = 0f;
+    private float endingFadeAlpha = 0f;
+
+    private boolean playerFrozen = false;
+    private boolean fullscreen = false;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -133,7 +137,11 @@ public class GameScreen implements Screen {
 
         font = new BitmapFont();
 
-        initialEnemySpawns = mapManager.getRandomEnemySpawns();
+        if (dungeonManager.isLastRoom()) {
+            initialEnemySpawns = mapManager.getAllEnemySpawns();
+        } else {
+            initialEnemySpawns = mapManager.getRandomEnemySpawns();
+        }
         enemies = new ArrayList<>();
         for (EnemySpawn spawn : initialEnemySpawns) {
             Enemy enemy = createEnemy(spawn);
@@ -166,6 +174,7 @@ public class GameScreen implements Screen {
 
     @Override
     public void render(float deltaTime) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) toggleFullscreen();
         Vector3 mouse = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
         uiCamera.unproject(mouse);
         float mx = mouse.x;
@@ -179,7 +188,7 @@ public class GameScreen implements Screen {
         Rectangle pauseButton = new Rectangle(bx + padX, by + padY, bw - padX * 2, bh - padY * 2);
         boolean hoverPauseExit = pauseButton.contains(mx, my);
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
             gamePaused = !gamePaused;
             if (gamePaused) {
                 if (bgMusic != null) bgMusic.pause();
@@ -202,14 +211,27 @@ public class GameScreen implements Screen {
             }
             return;
         }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) toggleFullscreen();
         deltaTime = Gdx.graphics.getDeltaTime();
         if (!gamePaused && !jugadorPrincipal.getVida().isMuerto()) {
             gameTimer += deltaTime;
         }
+        if (bossDefeated) {
+            bossDefeatedTimer += deltaTime;
+            if (!endingFading && bossDefeatedTimer >= BOSS_DEFEATED_DELAY) {
+                endingFading = true;
+            }
+            if (endingFading) {
+                endingFadeAlpha += deltaTime * ENDING_FADE_SPEED;
+                if (endingFadeAlpha >= 1f) {
+                    endingFadeAlpha = 1f;
+                    game.setScreen(new EndingScreen(game));
+                    return;
+                }
+            }
+        }
         updateTransition(deltaTime);
         boolean blockUpdate = isTransitioning;
-        if (!blockUpdate) {
+        if (!blockUpdate && !playerFrozen) {
             jugadorPrincipal.update(deltaTime, enemies);
         }
 
@@ -229,11 +251,7 @@ public class GameScreen implements Screen {
             deathRegistered = false;
         }
 
-        camera.position.set(
-            jugadorPrincipal.x,
-            jugadorPrincipal.y,
-            0
-        );
+        camera.position.set(jugadorPrincipal.x, jugadorPrincipal.y, 0);
         camera.update();
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -271,12 +289,21 @@ public class GameScreen implements Screen {
                     showingLevelScreen = true;
                     levelScreenTimer = 0f;
                 }
-
                 if (!bossUnlocked && enemiesKilled >= bossKillThreshold) {
                     bossUnlocked = true;
                     bossWarningShown = true;
                     bossWarningTimer = 0f;
                     System.out.println("[BOSS] Activado - próxima room será el jefe");
+                }
+
+                if (enemy instanceof Diablo && dungeonManager.isLastRoom() && !bossDefeated) {
+                    bossDefeated = true;
+                    playerFrozen = true;
+                    bossDefeatedTimer = 0f;
+                    bgMusic.setVolume(0.02f);
+                    jugadorPrincipal.stopAllSounds();
+                    System.out.println("[BOSS] Jefe final derrotado");
+                    saveStatsOnCompletion();
                 }
             }
 
@@ -355,10 +382,14 @@ public class GameScreen implements Screen {
         }
 
         jugadorPrincipal.render(batch, deltaTime);
+        if (endingFadeAlpha > 0f) {
+            batch.setColor(0, 0, 0, endingFadeAlpha);
+            batch.draw(fadeTexture, 0, 0, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
+            batch.setColor(1, 1, 1, 1);
+        }
         batch.end();
         batch.setProjectionMatrix(uiCamera.combined);
         batch.begin();
-
         if (fadeAlpha > 0f) {
             batch.setColor(0, 0, 0, fadeAlpha);
             batch.draw(
@@ -510,7 +541,11 @@ public class GameScreen implements Screen {
         playerSpawn = mapManager.getRandomPlayerSpawn();
         placePlayerSafe(playerSpawn);
 
-        initialEnemySpawns = mapManager.getRandomEnemySpawns();
+        if (dungeonManager.isLastRoom()) {
+            initialEnemySpawns = mapManager.getAllEnemySpawns();
+        } else {
+            initialEnemySpawns = mapManager.getRandomEnemySpawns();
+        }
         for (EnemySpawn spawn : initialEnemySpawns) {
             Enemy enemy = createEnemy(spawn);
             if (enemy != null) enemies.add(enemy);
@@ -627,6 +662,7 @@ public class GameScreen implements Screen {
     }
 
     private void saveStatsOnCompletion() {
+        bgMusic.stop();
         if (SessionManager.localId == null || SessionManager.localId.isEmpty()) return;
         SessionManager.deaths         += playerDeaths;
         SessionManager.enemiesKilled  += enemiesKilled;

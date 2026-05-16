@@ -9,6 +9,7 @@ public class PlayerAudioManager {
     private final Sound sprint;
     private final Sound hurt;
     private final Sound dead;
+    private final Sound celebrate;
 
     private long runId = -1;
     private long deathId = -1;
@@ -20,6 +21,7 @@ public class PlayerAudioManager {
         sprint = Gdx.audio.newSound(Gdx.files.internal("audio/sfx/player/sprint.wav"));
         hurt = Gdx.audio.newSound(Gdx.files.internal("audio/sfx/player/hurt.wav"));
         dead = Gdx.audio.newSound(Gdx.files.internal("audio/sfx/player/dead.wav"));
+        celebrate = Gdx.audio.newSound(Gdx.files.internal("audio/sfx/player/celebrate.wav"));
     }
 
     public void playRun(){
@@ -46,6 +48,10 @@ public class PlayerAudioManager {
 
     public void playHurt(){
         hurt.play(0.6f);
+    }
+
+    public void playCelebrate(){
+        celebrate.play(0.6f);
     }
 
     public void triggerDeath(){

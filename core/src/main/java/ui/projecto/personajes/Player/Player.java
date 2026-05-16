@@ -45,6 +45,7 @@ public class Player{
     private float cooldownTimer = 0f;
     private float attackTimer = 0f;
     private float hurtTimer = 0f;
+    private float celebrateTimer = 0f;
     private float damageCooldownTimer = 0f;
 
     private final float damageCooldown = ConstantsPlayer.DAMAGE_COOLDOWN;
@@ -73,6 +74,7 @@ public class Player{
         Texture sprint = new Texture("player/player_sprint.png");
         Texture hurt = new Texture("player/player_dolor.png");
         Texture dead = new Texture("player/player_muerte.png");
+        Texture celebrate = new Texture("player/player_celebrate.png");
 
         animations.add(PlayerState.IDLE, new Animation<>(0.08f, AnimationLoader.load(idle, 5, 5)));
         animations.add(PlayerState.RUN, new Animation<>(0.04f, AnimationLoader.load(run, 4, 4)));
@@ -80,6 +82,7 @@ public class Player{
         animations.add(PlayerState.SPRINT, new Animation<>(ConstantsPlayer.DURACION_SPRINT / 12f, AnimationLoader.load(sprint, 4, 3)));
         animations.add(PlayerState.HURT, new Animation<>(ConstantsPlayer.DURACION_DOLOR / 9f, AnimationLoader.load(hurt, 3, 3)));
         animations.add(PlayerState.DEAD, new Animation<>(ConstantsPlayer.DURACION_MUERTE / 42f, AnimationLoader.load(dead, 7, 6)));
+        animations.add(PlayerState.CELEBRATE, new Animation<>(0.08f, AnimationLoader.load(celebrate, 3, 2)));
     }
 
     public void update(float delta, List<Enemy> enemies){
@@ -159,6 +162,14 @@ public class Player{
             lastDirY = -1;
         }
 
+        if (state == PlayerState.IDLE && Gdx.input.isKeyJustPressed(Input.Keys.C)) {
+            state = PlayerState.CELEBRATE;
+            audio.playCelebrate();
+            celebrateTimer = 0f;
+            tiempo = 0f;
+            return;
+        }
+
         if (state != PlayerState.HURT){
             if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && !sprintCooldown && state != PlayerState.ATTACK){
                 if (state != PlayerState.SPRINT){
@@ -218,6 +229,14 @@ public class Player{
         if (state == PlayerState.ATTACK){
             attackTimer += delta;
             if (attackTimer >= ConstantsPlayer.DURACION_ATAQUE){
+                state = PlayerState.IDLE;
+            }
+            return;
+        }
+
+        if (state == PlayerState.CELEBRATE){
+            celebrateTimer += delta;
+            if (celebrateTimer >= ConstantsPlayer.DURACION_CELEBRATE){
                 state = PlayerState.IDLE;
             }
             return;

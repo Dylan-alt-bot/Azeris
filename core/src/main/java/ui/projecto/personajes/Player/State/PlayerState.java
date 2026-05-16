@@ -6,5 +6,6 @@ public enum PlayerState {
     ATTACK,
     SPRINT,
     HURT,
-    DEAD
+    DEAD,
+    CELEBRATE
 }

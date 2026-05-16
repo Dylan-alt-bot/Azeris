@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="50" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="15" nextobjectid="31">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="50" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="16" nextobjectid="39">
  <tileset firstgid="1" source="../tilesets/Paredes2.tsx"/>
  <tileset firstgid="494" source="../tilesets/puertas.tsx"/>
  <tileset firstgid="498" source="../tilesets/Coasts water 2 pro max.tsx"/>
@@ -456,11 +456,17 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,497,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
   </layer>
-  <objectgroup id="12" name="Utils">
-   <object id="5" gid="2700" x="744.333" y="121" width="18" height="18"/>
-   <object id="6" gid="2700" x="676.333" y="119.667" width="18" height="18"/>
-   <object id="7" gid="2700" x="256.333" y="131.667" width="18" height="18"/>
-   <object id="8" gid="2700" x="52.3333" y="306.333" width="18" height="18"/>
+  <objectgroup id="15" name="Utils">
+   <object id="31" gid="2700" x="256.617" y="130.987" width="18" height="18"/>
+   <object id="32" gid="2700" x="51.9936" y="306.098" width="18" height="18"/>
+   <object id="33" gid="2700" x="172.013" y="589.423" width="18" height="18"/>
+   <object id="34" gid="2700" x="420.907" y="472.355" width="18" height="18"/>
+   <object id="35" gid="2700" x="746.534" y="119.182" width="18" height="18"/>
+   <object id="36" gid="2700" x="676.686" y="120.166" width="18" height="18"/>
+   <object id="37" gid="2700" x="598.969" y="384.799" width="18" height="18"/>
+   <object id="38" gid="5591" x="713.069" y="125.117" width="21" height="21"/>
+  </objectgroup>
+  <objectgroup id="12" name="Entities">
    <object id="9" gid="2701" x="443.667" y="404.333" width="30" height="30"/>
    <object id="10" gid="2701" x="717" y="159" width="30" height="30"/>
    <object id="11" gid="2702" x="694.667" y="398.667" width="16" height="16"/>
@@ -478,13 +484,8 @@
    <object id="23" gid="2704" x="297.333" y="178.667" width="32" height="32"/>
    <object id="24" gid="2704" x="132" y="278.667" width="32" height="32"/>
    <object id="25" gid="2704" x="480" y="413.333" width="32" height="32"/>
-   <object id="26" gid="2700" x="173.456" y="586.778" width="18" height="18"/>
-   <object id="27" gid="2700" x="421.409" y="472.158" width="18" height="18"/>
-   <object id="28" gid="2700" x="599.187" y="396.135" width="18" height="18"/>
-   <object id="29" gid="5591" x="712.807" y="124.45" width="21" height="21"/>
    <object id="30" gid="5591" x="413.392" y="306.906" width="21" height="21"/>
   </objectgroup>
-  <objectgroup id="11" name="Entities"/>
   <objectgroup id="10" name="Player">
    <object id="1" gid="2699" x="702.667" y="384" width="64" height="64"/>
    <object id="2" gid="2699" x="362.667" y="144" width="64" height="64"/>

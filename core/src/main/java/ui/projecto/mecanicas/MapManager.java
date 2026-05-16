@@ -187,6 +187,11 @@ public class MapManager {
         return doorSpawns;
     }
 
+    public List<EnemySpawn> getAllEnemySpawns() {
+        System.out.println("[ENEMY] Boss room: spawneando todos los enemigos: " + enemySpawns.size());
+        return new ArrayList<>(enemySpawns);
+    }
+
     public void dispose() {
         if (map != null) map.dispose();
         if (mapRenderer != null) mapRenderer.dispose();

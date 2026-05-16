@@ -9,6 +9,8 @@ public class ConstantsPlayer {
     public static float VELOCIDAD = 150f;
     public static float VELOCIDAD_SPRINT = 300f;
 
+    public static final float DURACION_CELEBRATE = 0.4f;
+
     public static float DURACION_ATAQUE = 0.4f;
     public static float DURACION_SPRINT = 0.4f;
     public static float DURACION_DOLOR = 0.3f;

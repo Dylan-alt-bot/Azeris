@@ -27,20 +27,26 @@ public class MenuScreen implements Screen {
     private BitmapFont font;
     private MenuButton lastHoverButton;
     private Vector3 mouse;
+    private Texture fadeTexture;
 
     private Texture background;
     private Animation<TextureRegion> backgroundAnim;
-    private float backgroundTimer;
 
     private Texture complemento;
     private Animation<TextureRegion> complementoAnim;
-    private float animationTimer;
     private List<MenuButton> buttons;
 
     private boolean showingDevMessage = false;
     private boolean fullscreen = false;
+    private boolean isFading = false;
 
+    private float backgroundTimer;
+    private float animationTimer;
     private float devMessageTimer = 0f;
+    private float fadeAlpha = 0f;
+    private final float FADE_SPEED = 2f;
+
+    private Runnable pendingAction = null;
 
     public MenuScreen(Main game) {
         this.game = game;
@@ -62,6 +68,7 @@ public class MenuScreen implements Screen {
 
         hoverSound = Gdx.audio.newSound(Gdx.files.internal("pantalla/sfx/select.wav"));
         background = new Texture("pantalla/fondo.png");
+        fadeTexture = new Texture("extras/fnd_negro.png");
         TextureRegion[][] bgtmp = TextureRegion.split(
             background,
             background.getWidth() / 3,
@@ -103,19 +110,18 @@ public class MenuScreen implements Screen {
             new Texture("pantalla/botons/jugar.png"),
             new Texture("pantalla/botons/jugar_hover.png"),
             buttonsX, buttonsY, buttonsWidth, buttonsHeight, 230, 170,
-            () ->{
+            () -> startFade(() -> {
                 System.out.println("JUGAR");
                 menuMusic.pause();
-                game.setScreen(new GameScreen(game));
-            }
+                game.setScreen(new StoryScreen(game));
+            })
         ));
         int separation = 55;
         buttons.add(new MenuButton(
             new Texture("pantalla/botons/puntuacion.png"),
             new Texture("pantalla/botons/puntuacion_hover.png"),
             buttonsX, buttonsY - separation, buttonsWidth, buttonsHeight, 230, 170,
-            () -> {
-                menuMusic.pause();
+            () ->  {
                 Gdx.net.openURI("https://frontend-azeris.vercel.app/azeris/points");
             }
         ));
@@ -134,28 +140,28 @@ public class MenuScreen implements Screen {
             new Texture("pantalla/botons/creditos.png"),
             new Texture("pantalla/botons/creditos_hover.png"),
             buttonsX, buttonsY - separation * 3, buttonsWidth, buttonsHeight, 230, 170,
-            () -> {
+            () -> startFade (() -> {
                 System.out.println("CRÉDITOS");
                 menuMusic.pause();
                 game.setScreen(new CreditsScreen(game));
-            }
+            })
         ));
 
         buttons.add(new MenuButton(
             new Texture("pantalla/botons/salir.png"),
             new Texture("pantalla/botons/salir_hover.png"),
             buttonsX, buttonsY - separation * 4, buttonsWidth, buttonsHeight, 230, 170,
-            () -> Gdx.app.exit()
+            () -> startFade(Gdx.app::exit)
         ));
 
         buttons.add(new MenuButton(
             new Texture("pantalla/botons/usuario.png"),
             new Texture("pantalla/botons/usuario_hover.png"),
             380, 420, buttonsWidth, buttonsHeight, 230, 170,
-            () -> {
+            () -> startFade(() -> {
                 menuMusic.pause();
                 game.setScreen(new UserScreen(game));
-            }
+            })
         ));
     }
 
@@ -172,12 +178,24 @@ public class MenuScreen implements Screen {
         camera.unproject(mouse);
         MenuButton hoveredButtonNow = null;
         boolean clickConsumed = false;
+
+        if (isFading) {
+            fadeAlpha += delta * FADE_SPEED;
+            if (fadeAlpha >= 1f) {
+                fadeAlpha = 1f;
+                if (pendingAction != null) {
+                    pendingAction.run();
+                    pendingAction = null;
+                }
+            }
+        }
+
         for (MenuButton button : buttons) {
             boolean hovered = button.getBounds().contains(mouse.x, mouse.y);
             if (hovered && !clickConsumed) {
                 button.setHovered(true);
                 hoveredButtonNow = button;
-                if (Gdx.input.isButtonJustPressed(0)) {
+                if (Gdx.input.isButtonJustPressed(0) && !isFading) {
                     button.click();
                     clickConsumed = true;
                 }
@@ -229,6 +247,13 @@ public class MenuScreen implements Screen {
                 devMessageTimer = 0f;
             }
         }
+
+        if (fadeAlpha > 0f) {
+            game.batch.setColor(1, 1, 1, fadeAlpha);
+            game.batch.draw(fadeTexture, 0, 0, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
+            game.batch.setColor(1, 1, 1, 1);
+        }
+
         game.batch.end();
     }
 
@@ -239,6 +264,13 @@ public class MenuScreen implements Screen {
             Gdx.graphics.setWindowedMode(640, 480);
         }
         fullscreen = !fullscreen;
+    }
+
+    private void startFade(Runnable action) {
+        if (isFading) return;
+        isFading = true;
+        fadeAlpha = 0f;
+        pendingAction = action;
     }
 
     @Override
@@ -253,6 +285,7 @@ public class MenuScreen implements Screen {
     public void dispose() {
         background.dispose();
         complemento.dispose();
+        if (fadeTexture != null) fadeTexture.dispose();
         if (menuMusic != null) menuMusic.dispose();
         if (hoverSound != null) hoverSound.dispose();
         for (MenuButton button : buttons) {
