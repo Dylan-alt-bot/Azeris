@@ -77,4 +77,16 @@ Este proyecto está dirigido principalmente a:
 
 ### Instalación
 
-- TODO: Detallar instalacion de Azeris.exe
+- Windows
+
+Desde la página oficial, descarga el archivo AzerisWindowsVer subido a Itch.io. Descomprímelo y ejecuta el archivo Azeris.exe.
+
+- Ubuntu
+
+Desde la página oficial, descarga AzerisUbuntuVer subido a Itch.io. Descomprímelo y abre la terminal. Dirígete a la carpeta /bin de AzerisUbuntuVer y ejecuta el siguiente comando:
+
+````
+sudo chmod +x AzerisUbuntuVer
+````
+
+Por defecto, Ubuntu no deja ejecutar el archivo a menos que se le otorguen los permisos explícitos de ejecución Una vez realizado el comando, ejecuta el archivo AzerisUbuntuVer con doble clic.
