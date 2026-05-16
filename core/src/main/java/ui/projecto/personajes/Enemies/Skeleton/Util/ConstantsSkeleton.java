@@ -7,6 +7,8 @@ public class ConstantsSkeleton {
     public static final float VELOCIDAD = 70f;
     public static final float DETECTED_PLAYER = 150f;
 
+    public static final float MEMORY_DURATION = 3.0f;
+
     public static float WAIT_TIMER = 5f;
 
     public static float ALERT_DURATION = 1f;

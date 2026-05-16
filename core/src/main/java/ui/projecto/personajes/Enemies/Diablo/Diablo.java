@@ -25,7 +25,7 @@ public class Diablo implements Enemy {
     private final float velocidad = ConstantsDiablo.VELOCIDAD;
 
     private final Vida vida = new Vida(ConstantsDiablo.VIDA);
-    private DiabloState state = DiabloState.IDLE;
+    private DiabloState state = DiabloState.IDLE, previousState = DiabloState.IDLE;
     private final AnimationManagerDiablo animations = new AnimationManagerDiablo();
     private final DiabloAudioManager audio = new DiabloAudioManager();
     private final MapManager map;
@@ -40,6 +40,7 @@ public class Diablo implements Enemy {
     private float alertTimer = 0f;
     private float attackTimer  = 0f;
     private float hurtTimer  = 0f;
+    private float damageTimer = 0f;
 
     private float alertDuration = ConstantsDiablo.ALERT_DURATION;
     private final float attackRange = ConstantsDiablo.ATTACK_RANGE;
@@ -90,8 +91,7 @@ public class Diablo implements Enemy {
             }
             return;
         }
-        DiabloState previousState = state;
-
+        if (damageTimer > 0f) damageTimer -= delta;
         if (state == DiabloState.ATTACK) {
             attackTimer += delta;
             updateFacing(player.x - x);
@@ -106,9 +106,8 @@ public class Diablo implements Enemy {
             updateFacing(player.x - x);
             if (knockbackTimer > 0f){
                 knockbackTimer -= delta;
-                float moveX = knockbackX * velocidad * delta;
-                float moveY = knockbackY * velocidad * delta;
-
+                float moveX = knockbackX * delta;
+                float moveY = knockbackY * delta;
                 if (!map.isBlocked(x + moveX, y, width, height)) x += moveX;
                 if (!map.isBlocked(x, y + moveY, width, height)) y += moveY;
             }
@@ -121,7 +120,28 @@ public class Diablo implements Enemy {
             return;
         }
 
-        if (vision.isPlayerInRange(x,y, player.x, player.y)){
+        float dx = player.x - x;
+        float dy = player.y - y;
+        float distToPlayer = (float) Math.sqrt(dx * dx + dy * dy);
+
+        boolean playerInRange = vision.isPlayerInRange(x, y, player.x, player.y);
+        if (playerInRange) {
+            vision.updateLastSeenPosition(player.x, player.y, tiempo);
+        }
+
+        boolean hasLineOfSight = false;
+        if (playerInRange) {
+            if (distToPlayer < attackRange * 1.5f) {
+                hasLineOfSight = true;
+            } else {
+                hasLineOfSight = pathFinder.hasLineOfSight(x, y, player.x, player.y);
+            }
+        }
+
+        boolean hasRecentMemory = vision.hasRecentMemory(tiempo, ConstantsDiablo.MEMORY_DURATION);
+        Vector2 targetPosition;
+        if (playerInRange && hasLineOfSight) {
+            targetPosition = new Vector2(player.x, player.y);
             if (!alertStarted) {
                 audio.stopMovementAudio();
                 audio.playAlert();
@@ -130,48 +150,54 @@ public class Diablo implements Enemy {
                 alertStarted = true;
                 wander.stop();
             }
-            if (state == DiabloState.ALERT){
+            if (state == DiabloState.ALERT) {
                 alertTimer += delta;
                 updateFacing(player.x - x);
-                if (alertTimer >= ConstantsDiablo.ALERT_DURATION){
+                if (alertTimer >= ConstantsDiablo.ALERT_DURATION) {
                     state = DiabloState.WALK;
                     audio.playWalk();
                 }
                 return;
             }
-            if (state == DiabloState.WALK) {
-                audio.playWalk();
-                Vector2 nextStep = pathFinder.findNextStep(x, y, player.x, player.y);
-                float oldX = x;
-                float oldY = y;
-                if (nextStep != null){
-                    float dx = nextStep.x - x;
-                    float dy = nextStep.y - y;
-                    float dist = (float) Math.sqrt(dx * dx + dy * dy);
-                    if (dist > 1f){
-                        float moveX = (dx / dist) * velocidad * delta;
-                        float moveY = (dy / dist) * velocidad * delta;
 
-                        if (!map.isBlocked(getHitboxX() + moveX, getHitboxY(), width, height)) {
-                            x += moveX;
-                            if (collidesWithPlayer(player)) x = oldX;
-                        }
-                        if (!map.isBlocked(getHitboxX(), getHitboxY() + moveY, width, height)) {
-                            y += moveY;
-                            if (collidesWithPlayer(player)) y = oldY;
-                        }
-                    }
-                    if (isPlayerInAttackRange(player)){
-                        audio.stopWalk();
-                        audio.playAttack();
-                        state = DiabloState.ATTACK;
-                        attackTimer = 0f;
+            if (state == DiabloState.WALK) {
+                executeChase(delta, targetPosition, player);
+            }
+        }
+        else if (hasRecentMemory) {
+            targetPosition = vision.getLastSeenPosition();
+            if (state != DiabloState.WALK && state != DiabloState.ATTACK) {
+                audio.stopMovementAudio();
+                audio.playWalk();
+                state = DiabloState.WALK;
+            }
+
+            if (state == DiabloState.WALK) {
+                executeMovementToTarget(delta, targetPosition);
+
+                float memDx = targetPosition.x - x;
+                float memDy = targetPosition.y - y;
+                float distToMemory = (float) Math.sqrt(memDx * memDx + memDy * memDy);
+                boolean canNowSeePlayer = pathFinder.hasLineOfSight(x, y, player.x, player.y);
+
+                if (canNowSeePlayer) {
+                    vision.updateLastSeenPosition(player.x, player.y, tiempo);
+                    alertStarted = true;
+                    state = DiabloState.WALK;
+                    audio.playWalk();
+                } else if (distToMemory < 20f) {
+                    if (vision.getTimeSinceLastSeen(tiempo) > ConstantsDiablo.MEMORY_DURATION) {
+                        vision.clearMemory();
+                        alertStarted = false;
+                        state = DiabloState.IDLE;
                     }
                 }
-                updateFacing(x - oldX);
+                updateFacing(targetPosition.x - x);
                 resolvePlayerCollision(player);
             }
-        } else {
+        }
+        else {
+            vision.clearMemory();
             alertStarted = false;
             alertTimer = 0f;
             if (!wander.hasTarget()){
@@ -182,10 +208,10 @@ public class Diablo implements Enemy {
                 state = DiabloState.WALK;
 
                 float oldX = x;
-                x = wander.moveX(x,y,delta);
-                y = wander.moveY(x,y,delta);
+                x = wander.moveX(x, y, delta);
+                y = wander.moveY(x, y, delta);
                 updateFacing(x - oldX);
-                if (wander.reachedTarget(x,y)){
+                if (wander.reachedTarget(x, y)){
                     wander.stop();
                     state = DiabloState.IDLE;
                 }
@@ -195,7 +221,6 @@ public class Diablo implements Enemy {
             }
             resolvePlayerCollision(player);
         }
-
         if (knockbackTimer > 0f) {
             knockbackTimer -= delta;
             float moveX = knockbackX * delta;
@@ -299,6 +324,91 @@ public class Diablo implements Enemy {
                     y -= 2f;
                 }
             }
+        }
+    }
+
+    private void executeChase(float delta, Vector2 target, Player player) {
+        audio.playWalk();
+        float dx = target.x - x;
+        float dy = target.y - y;
+        float distToTarget = (float) Math.sqrt(dx * dx + dy * dy);
+        if (distToTarget < attackRange) {
+            audio.stopWalk();
+            audio.playAttack();
+            state = DiabloState.ATTACK;
+            attackTimer = 0f;
+            return;
+        }
+        executeMovementToTarget(delta, target);
+        updateFacing(dx);
+        resolvePlayerCollision(player);
+    }
+
+    private void executeMovementToTarget(float delta, Vector2 target) {
+        Vector2 nextStep = pathFinder.findNextStep(x, y, target.x, target.y);
+        if (nextStep != null) {
+            float ndx = nextStep.x - x;
+            float ndy = nextStep.y - y;
+            float length = (float) Math.sqrt(ndx * ndx + ndy * ndy);
+
+            if (length > 0.01f) {
+                float moveX = ndx / length * velocidad * delta;
+                float moveY = ndy / length * velocidad * delta;
+                float newX = x + moveX;
+                float newY = y + moveY;
+
+                boolean canMoveDiagonal = !map.isBlocked(newX, newY, width, height);
+                boolean canMoveX = !map.isBlocked(newX, y, width, height);
+                boolean canMoveY = !map.isBlocked(x, newY, width, height);
+
+                if (canMoveDiagonal) {
+                    x = newX;
+                    y = newY;
+                } else if (canMoveX) {
+                    x = newX;
+                } else if (canMoveY) {
+                    y = newY;
+                } else {
+                    Vector2 alternative = findAlternativeMove(target);
+                    if (alternative != null) {
+                        x = alternative.x;
+                        y = alternative.y;
+                    }
+                }
+            }
+        } else {
+            moveDirectlyTowardsTarget(delta, target);
+        }
+    }
+
+    private Vector2 findAlternativeMove(Vector2 target) {
+        float[] offsets = {-velocidad, velocidad};
+        for (float ox : offsets) {
+            for (float oy : offsets) {
+                float newX = x + ox;
+                float newY = y + oy;
+                if (!map.isBlocked(newX, newY, width, height) &&
+                    Math.abs(newX - target.x) < Math.abs(x - target.x)) {
+                    return new Vector2(newX, newY);
+                }
+            }
+        }
+        return null;
+    }
+
+    private void moveDirectlyTowardsTarget(float delta, Vector2 target) {
+        float dx = target.x - x;
+        float dy = target.y - y;
+        float length = (float) Math.sqrt(dx * dx + dy * dy);
+        if (length > 0.01f) {
+            float moveX = dx / length * velocidad * delta;
+            float moveY = dy / length * velocidad * delta;
+
+            float newX = x + moveX;
+            float newY = y + moveY;
+
+            if (!map.isBlocked(newX, y, width, height)) x = newX;
+            if (!map.isBlocked(x, newY, width, height)) y = newY;
         }
     }
 

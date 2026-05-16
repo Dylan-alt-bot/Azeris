@@ -87,6 +87,7 @@ public class Amongus implements Enemy {
             if (state != AmongusState.DEAD) {
                 audio.stopRun();
                 audio.playDead();
+                tiempo = 0f;
             }
             state = AmongusState.DEAD;
             return;
@@ -110,7 +111,28 @@ public class Amongus implements Enemy {
             return;
         }
 
-        if (vision.isPlayerInRange(x,y, player.x, player.y)) {
+        float dx = player.x - x;
+        float dy = player.y - y;
+        float distToPlayer = (float) Math.sqrt(dx * dx + dy * dy);
+
+        boolean playerInRange = vision.isPlayerInRange(x, y, player.x, player.y);
+        if (playerInRange) {
+            vision.updateLastSeenPosition(player.x, player.y, tiempo);
+        }
+
+        boolean hasLineOfSight = false;
+        if (playerInRange) {
+            if (distToPlayer < attackRange * 1.5f) {
+                hasLineOfSight = true;
+            } else {
+                hasLineOfSight = pathFinder.hasLineOfSight(x, y, player.x, player.y);
+            }
+        }
+
+        boolean hasRecentMemory = vision.hasRecentMemory(tiempo, ConstantsAmongus.MEMORY_DURATION);
+        Vector2 targetPosition;
+        if (playerInRange && hasLineOfSight) {
+            targetPosition = new Vector2(player.x, player.y);
             if (!alertStarted) {
                 audio.stopRun();
                 audio.playAlert();
@@ -119,57 +141,66 @@ public class Amongus implements Enemy {
                 alertStarted = true;
                 wander.stop();
             }
+
             if (state == AmongusState.ALERT) {
                 alertTimer += delta;
                 facingRight = player.x < x;
-                if (alertTimer >= ConstantsAmongus.ALERT_DURATION){
+                if (alertTimer >= ConstantsAmongus.ALERT_DURATION) {
                     state = AmongusState.RUN;
                     audio.playRun();
                 }
             } else if (state == AmongusState.RUN) {
+                executeChase(delta, targetPosition);
+            }
+        }
+        else if (hasRecentMemory) {
+            targetPosition = vision.getLastSeenPosition();
+            if (state != AmongusState.RUN && state != AmongusState.ATTACK_1 &&
+                state != AmongusState.ATTACK_2 && state != AmongusState.ATTACK_3) {
+                audio.stopRun();
                 audio.playRun();
-                float dx = player.x - x;
-                float dy = player.y - y;
-                float dist = (float) Math.sqrt(dx * dx + dy * dy);
-                if (dist < attackRange) {
-                    startAttack();
-                    return;
-                }
-                Vector2 nextStep = pathFinder.findNextStep(x,y,player.x,player.y);
-                if (nextStep != null) {
-                    float ndx = nextStep.x - x;
-                    float ndy = nextStep.y - y;
-                    float length = (float) Math.sqrt(ndx * ndx + ndy * ndy);
+                state = AmongusState.RUN;
+            }
+            executeMovementToTarget(delta, targetPosition);
+            float memDx = targetPosition.x - x;
+            float memDy = targetPosition.y - y;
+            float distToMemory = (float) Math.sqrt(memDx * memDx + memDy * memDy);
+            boolean canNowSeePlayer = pathFinder.hasLineOfSight(x, y, player.x, player.y);
 
-                    if (length != 0) {
-                        ndx /= length;
-                        ndy /= length;
-                    }
-                    float moveX = x + ndx * velocidad * delta;
-                    float moveY = y + ndy * velocidad * delta;
-
-                    if (!map.isBlocked(moveX, y , width, height)) x = moveX;
-                    if (!map.isBlocked(x, moveY , width, height)) y = moveY;
-
-                    facingRight = dx < 0;
+            if (canNowSeePlayer) {
+                vision.updateLastSeenPosition(player.x, player.y, tiempo);
+                alertStarted = true;
+                state = AmongusState.RUN;
+                audio.playRun();
+            } else if (distToMemory < 20f) {
+                if (vision.getTimeSinceLastSeen(tiempo) > ConstantsAmongus.MEMORY_DURATION) {
+                    vision.clearMemory();
+                    alertStarted = false;
+                    state = AmongusState.IDLE;
                 }
             }
-        } else {
+        }
+        else {
+            vision.clearMemory();
             alertStarted = false;
             alertTimer = 0f;
             wander.update(delta, x, y);
 
             if (wander.hasTarget()) {
-                float oldX = x;
-                x = wander.moveX(x,y,delta);
-                y = wander.moveY(x,y,delta);
-                audio.playRun();
+                if (state != AmongusState.RUN) {
+                    audio.stopRun();
+                    audio.playRun();
+                }
                 state = AmongusState.RUN;
+                float oldX = x;
+
+                x = wander.moveX(x, y, delta);
+                y = wander.moveY(x, y, delta);
 
                 if (x < oldX) facingRight = true;
                 else if (x > oldX) facingRight = false;
 
-                if (wander.reachedTarget(x,y)){
+                if (wander.reachedTarget(x, y)) {
                     wander.stop();
                     state = AmongusState.IDLE;
                 }
@@ -179,17 +210,18 @@ public class Amongus implements Enemy {
             }
         }
 
-        if (knockbackTimer > 0f){
+        if (knockbackTimer > 0f) {
             knockbackTimer -= delta;
             float moveX = knockbackX * delta;
             float moveY = knockbackY * delta;
 
-            if (!map.isBlocked(x + moveX , y , width, height)) x += moveX;
-            if (!map.isBlocked(x, y + moveY , width, height)) y += moveY;
+            if (!map.isBlocked(x + moveX, y, width, height)) x += moveX;
+            if (!map.isBlocked(x, y + moveY, width, height)) y += moveY;
 
             return;
         }
-        if (state != previousState){
+
+        if (state != previousState) {
             tiempo = 0f;
             previousState = state;
         }
@@ -250,6 +282,90 @@ public class Amongus implements Enemy {
         }
         attackTimer = 0f;
         tiempo = 0f;
+    }
+
+    private void executeMovementToTarget(float delta, Vector2 target) {
+        Vector2 nextStep = pathFinder.findNextStep(x, y, target.x, target.y);
+        if (nextStep != null) {
+            float ndx = nextStep.x - x;
+            float ndy = nextStep.y - y;
+            float length = (float) Math.sqrt(ndx * ndx + ndy * ndy);
+
+            if (length > 0.01f) {
+                float moveX = ndx / length * velocidad * delta;
+                float moveY = ndy / length * velocidad * delta;
+
+                float newX = x + moveX;
+                float newY = y + moveY;
+
+                boolean canMoveDiagonal = !map.isBlocked(newX, newY, width, height);
+                boolean canMoveX = !map.isBlocked(newX, y, width, height);
+                boolean canMoveY = !map.isBlocked(x, newY, width, height);
+                if (canMoveDiagonal) {
+                    x = newX;
+                    y = newY;
+                } else if (canMoveX) {
+                    x = newX;
+                } else if (canMoveY) {
+                    y = newY;
+                } else {
+                    Vector2 alternative = findAlternativeMove(target);
+                    if (alternative != null) {
+                        x = alternative.x;
+                        y = alternative.y;
+                    }
+                }
+
+                facingRight = moveX < 0;
+            }
+        } else {
+            moveDirectlyTowardsTarget(delta, target);
+        }
+    }
+
+    private void moveDirectlyTowardsTarget(float delta, Vector2 target) {
+        float dx = target.x - x;
+        float dy = target.y - y;
+        float length = (float) Math.sqrt(dx * dx + dy * dy);
+        if (length > 0.01f) {
+            float moveX = dx / length * velocidad * delta;
+            float moveY = dy / length * velocidad * delta;
+
+            float newX = x + moveX;
+            float newY = y + moveY;
+
+            if (!map.isBlocked(newX, y, width, height)) x = newX;
+            if (!map.isBlocked(x, newY, width, height)) y = newY;
+
+            facingRight = moveX < 0;
+        }
+    }
+
+    private Vector2 findAlternativeMove(Vector2 target) {
+        float[] offsets = {-velocidad, velocidad};
+        for (float ox : offsets) {
+            for (float oy : offsets) {
+                float newX = x + ox;
+                float newY = y + oy;
+                if (!map.isBlocked(newX, newY, width, height) &&
+                    Math.abs(newX - target.x) < Math.abs(x - target.x)) {
+                    return new Vector2(newX, newY);
+                }
+            }
+        }
+        return null;
+    }
+
+    private void executeChase(float delta, Vector2 target) {
+        audio.playRun();
+        float dx = target.x - x;
+        float dy = target.y - y;
+        float distToTarget = (float) Math.sqrt(dx * dx + dy * dy);
+        if (distToTarget < attackRange) {
+            startAttack();
+            return;
+        }
+        executeMovementToTarget(delta, target);
     }
 
     @Override

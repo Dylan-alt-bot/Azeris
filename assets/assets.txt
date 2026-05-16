@@ -1,3 +1,4 @@
+META-INF/MANIFEST.MF
 audio/music/musicIssac.mp3
 audio/sfx/enemy/amongus/amongusAlert.wav
 audio/sfx/enemy/amongus/amongusAttack1.wav
@@ -100,6 +101,7 @@ maps/mapas/Mapa6.tmx
 maps/mapas/Mapa7.tmx
 maps/mapas/Mapa8.tmx
 maps/mapas/Mapa9.tmx
+maps/mapas/MapaDescartado.tmx
 maps/textures/Objects.png
 maps/textures/Other_objects.png
 maps/textures/Skeleton.png

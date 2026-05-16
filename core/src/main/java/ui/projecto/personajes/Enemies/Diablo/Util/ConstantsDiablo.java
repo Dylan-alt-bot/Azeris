@@ -17,5 +17,6 @@ public class ConstantsDiablo {
 
     public static float HURT_DURATION = 0.3f;
 
+    public static final float MEMORY_DURATION = 3.0f;
     public static float KNOCKBACK_DURATION = 0.2f;
 }

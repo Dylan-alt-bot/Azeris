@@ -7,6 +7,8 @@ public class ConstantsAmongus {
     public static float VELOCIDAD = 90f;
     public static float DETECTED_PLAYER = 150f;
 
+    public static final float MEMORY_DURATION = 3.0f;
+
     public static float WAIT_TIMER = 4f;
 
     public static float ATTACK_RANGE = 20f;

@@ -127,6 +127,32 @@ public class MapManager {
         return false;
     }
 
+    public boolean isLineOfSightFree(float x1, float y1, float x2, float y2) {
+        float dx = x2 - x1;
+        float dy = y2 - y1;
+        float distance = (float) Math.sqrt(dx * dx + dy * dy);
+        if (distance == 0) return true;
+
+        dx /= distance;
+        dy /= distance;
+
+        float step = Math.min(tileSize / 3f, 5f);
+        int steps = (int) (distance / step) + 1;
+        float offset = 3f;
+
+        for (int i = 0; i <= steps; i++) {
+            float checkX = x1 + dx * (i * step);
+            float checkY = y1 + dy * (i * step);
+            if (isBlocked(checkX - offset, checkY - offset, offset * 2, offset * 2)) {
+                float remainingDistance = (float) Math.sqrt(Math.pow(x2 - checkX, 2) + Math.pow(y2 - checkY, 2));
+                if (remainingDistance > tileSize) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     public void render (OrthographicCamera camera){
         mapRenderer.setView(camera);
         mapRenderer.render();

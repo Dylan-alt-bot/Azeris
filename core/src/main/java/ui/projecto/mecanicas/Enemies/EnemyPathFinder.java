@@ -31,7 +31,7 @@ public class EnemyPathFinder {
         if (isBlocked(targetNode)) return null;
         List<Node> path = aStar(startNode, targetNode);
         if (path == null || path.size() < 2) return null;
-        Node next = path.get(1);
+        Node next = getNextSmoothNode(startNode, path);
         return tileToWorld(next.x, next.y);
     }
 
@@ -45,6 +45,39 @@ public class EnemyPathFinder {
             }
         }
         return null;
+    }
+
+    private Node getNextSmoothNode(Node current, List<Node> path) {
+        if (path.size() <= 2) return path.get(1);
+        for (int i = Math.min(3, path.size() - 1); i > 0; i--) {
+            Node candidate = path.get(i);
+            if (isWalkableLine(current, candidate)) {
+                return candidate;
+            }
+        }
+        return path.get(1);
+    }
+
+    private boolean isWalkableLine(Node from, Node to) {
+        float fromX = from.x * tileSize + tileSize / 2f;
+        float fromY = from.y * tileSize + tileSize / 2f;
+        float toX = to.x * tileSize + tileSize / 2f;
+        float toY = to.y * tileSize + tileSize / 2f;
+
+        return map.isLineOfSightFree(fromX, fromY, toX, toY);
+    }
+
+    public boolean hasLineOfSight(float startX, float startY, float targetX, float targetY) {
+        return map.isLineOfSightFree(startX, startY, targetX, targetY);
+    }
+
+    private boolean isDiagonalWalkable(Node current, Node neighbor) {
+        if (Math.abs(neighbor.x - current.x) == 1 && Math.abs(neighbor.y - current.y) == 1) {
+            Node horizontal = new Node(new int[]{neighbor.x, current.y});
+            Node vertical = new Node(new int[]{current.x, neighbor.y});
+            return !isBlocked(horizontal) && !isBlocked(vertical);
+        }
+        return true;
     }
 
     private boolean isBlocked(Node n) {
@@ -93,13 +126,10 @@ public class EnemyPathFinder {
         PriorityQueue<Node> open = new PriorityQueue<>(Comparator.comparingDouble(Node::f));
         Map<String, Node> allNodes = new HashMap<>();
         Set<String> closed = new HashSet<>();
-
         start.g = 0;
         start.h = heuristic(start, target);
-
         open.add(start);
         allNodes.put(key(start.x, start.y), start);
-
         while (!open.isEmpty()) {
             Node current = open.poll();
             String currentKey = key(current.x, current.y);
@@ -108,32 +138,33 @@ public class EnemyPathFinder {
                 return reconstructPath(current);
             }
             closed.add(currentKey);
+
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dy = -1; dy <= 1; dy++) {
-                    if (Math.abs(dx) + Math.abs(dy) != 1) continue;
-
+                    if (dx == 0 && dy == 0) continue;
                     int nx = current.x + dx;
                     int ny = current.y + dy;
-
                     String neighborKey = key(nx, ny);
                     if (closed.contains(neighborKey)) continue;
+                    Node neighbor = new Node(new int[]{nx, ny});
+                    if (isBlocked(neighbor)) continue;
+                    if (!isDiagonalWalkable(current, neighbor)) continue;
 
-                    float worldX = nx * tileSize;
-                    float worldY = ny * tileSize;
-
-                    if (map.isBlocked(worldX, worldY, tileSize, tileSize)) continue;
-                    Node neighbor = allNodes.get(neighborKey);
-                    if (neighbor == null) {
-                        neighbor = new Node(new int[]{nx, ny});
-                        allNodes.put(neighborKey, neighbor);
+                    Node existing = allNodes.get(neighborKey);
+                    if (existing != null) {
+                        neighbor = existing;
                     }
-                    float tentativeG = current.g + 1;
+
+                    float moveCost = (dx != 0 && dy != 0) ? 1.414f : 1.0f;
+                    float tentativeG = current.g + moveCost;
                     if (tentativeG < neighbor.g) {
                         neighbor.g = tentativeG;
                         neighbor.h = heuristic(neighbor, target);
                         neighbor.parent = current;
-
-                        if (!open.contains(neighbor)) {
+                        if (existing == null) {
+                            allNodes.put(neighborKey, neighbor);
+                            open.add(neighbor);
+                        } else if (!open.contains(neighbor)) {
                             open.add(neighbor);
                         }
                     }

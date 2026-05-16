@@ -7,6 +7,8 @@ public class ConstantsGoomba {
     public static float VELOCIDAD = 50f;
     public static float DETECTED_PLAYER = 150f;
 
+    public static final float MEMORY_DURATION = 3.0f;
+
     public static float WAIT_TIMER = 3f;
 
     public static float ALERT_DURATION = 1f;
