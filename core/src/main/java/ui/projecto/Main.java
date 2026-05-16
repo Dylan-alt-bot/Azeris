@@ -8,6 +8,7 @@ import ui.projecto.Screens.StartScreen;
 
 public class Main extends Game {
     public SpriteBatch batch;
+    public boolean guestMode = false;
 
     @Override
     public void create() {

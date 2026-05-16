@@ -39,12 +39,15 @@ public class MenuScreen implements Screen {
     private boolean showingDevMessage = false;
     private boolean fullscreen = false;
     private boolean isFading = false;
+    private boolean showingGuestMessage = false;
 
+    private final float FADE_SPEED = 2f;
     private float backgroundTimer;
     private float animationTimer;
     private float devMessageTimer = 0f;
     private float fadeAlpha = 0f;
-    private final float FADE_SPEED = 2f;
+    private float guestMessageTimer = 0f;
+
 
     private Runnable pendingAction = null;
 
@@ -158,10 +161,17 @@ public class MenuScreen implements Screen {
             new Texture("pantalla/botons/usuario.png"),
             new Texture("pantalla/botons/usuario_hover.png"),
             380, 420, buttonsWidth, buttonsHeight, 230, 170,
-            () -> startFade(() -> {
-                menuMusic.pause();
-                game.setScreen(new UserScreen(game));
-            })
+            () -> {
+                if (game.guestMode) {
+                    showingGuestMessage = true;
+                    guestMessageTimer = 0f;
+                    return;
+                }
+                startFade(() -> {
+                    menuMusic.pause();
+                    game.setScreen(new UserScreen(game));
+                });
+            }
         ));
     }
 
@@ -245,6 +255,19 @@ public class MenuScreen implements Screen {
             if (devMessageTimer >= DEV_MESSAGE_DURATION) {
                 showingDevMessage = false;
                 devMessageTimer = 0f;
+            }
+        }
+
+        if (showingGuestMessage) {
+            guestMessageTimer += delta;
+            String msg = "Debes registrarte para acceder a las estadísticas";
+            GlyphLayout layout = new GlyphLayout(font, msg);
+            float tx = (ConstantsPlayer.VIRTUAL_WIDTH - layout.width) / 2f;
+            float ty = 430f;
+            font.draw(game.batch, layout, tx, ty);
+            if (guestMessageTimer >= 3f) {
+                showingGuestMessage = false;
+                guestMessageTimer = 0f;
             }
         }
 

@@ -38,6 +38,10 @@ public class UserScreen implements Screen {
     private boolean hoverLogout = false;
     private boolean lastHoverLogout = false;
 
+    private boolean showingDeleteConfirmation = false;
+    private boolean hoverYes = false;
+    private boolean hoverNo = false;
+
     private boolean fullscreen = false;
 
     public UserScreen(Main game) {
@@ -80,7 +84,7 @@ public class UserScreen implements Screen {
         }
         lastHoverLogout = hoverLogout;
 
-        if (hoverLogout && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+        if (!showingDeleteConfirmation && hoverLogout && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             logout();
         }
 
@@ -99,8 +103,8 @@ public class UserScreen implements Screen {
         }
         lastHoverDelete = hoverDelete;
 
-        if (hoverDelete && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
-            deleteAccount();
+        if (hoverDelete && Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && !showingDeleteConfirmation) {
+            showingDeleteConfirmation = true;
         }
 
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1);
@@ -132,6 +136,55 @@ public class UserScreen implements Screen {
         font.draw(game.batch, "BEST TIME: " + tiempoMostrar, 250, 160);
         font.draw(game.batch, "ESC = volver", 100, 110);
 
+        if (showingDeleteConfirmation) {
+            game.batch.end();
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            shape.begin(ShapeRenderer.ShapeType.Filled);
+            shape.setColor(0f, 0f, 0f, 0.75f);
+            shape.rect(0, 0, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
+
+            shape.setColor(0.15f, 0.15f, 0.15f, 1f);
+            shape.rect(150, 140, 340, 140);
+
+            float yesX = 210;
+            float noX = 360;
+            float btnY = 160;
+            float btnW = 80;
+            float btnH = 35;
+
+            hoverYes = mx >= yesX && mx <= yesX + btnW && my >= btnY && my <= btnY + btnH;
+            hoverNo = mx >= noX && mx <= noX + btnW && my >= btnY && my <= btnY + btnH;
+
+            if (hoverYes) {
+                shape.setColor(0.7f, 0.1f, 0.1f, 1f);
+            } else {
+                shape.setColor(0.4f, 0.1f, 0.1f, 1f);
+            }
+            shape.rect(yesX, btnY, btnW, btnH);
+
+            if (hoverNo) {
+                shape.setColor(0.1f, 0.5f, 0.1f, 1f);
+            } else {
+                shape.setColor(0.1f, 0.3f, 0.1f, 1f);
+            }
+            shape.rect(noX, btnY, btnW, btnH);
+            shape.end();
+            game.batch.begin();
+
+            font.draw(game.batch, "¿ESTÁS SEGURO DE BORRAR LA CUENTA?", 170, 250);
+            font.draw(game.batch, "Esta acción no se puede deshacer", 205, 220);
+            font.draw(game.batch, "SI", yesX + 28, btnY + 23);
+            font.draw(game.batch, "NO", noX + 28, btnY + 23);
+
+            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                if (hoverYes) {
+                    deleteAccount();
+                }
+                if (hoverNo) {
+                    showingDeleteConfirmation = false;
+                }
+            }
+        }
         game.batch.end();
         if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
             game.setScreen(new MenuScreen(game));

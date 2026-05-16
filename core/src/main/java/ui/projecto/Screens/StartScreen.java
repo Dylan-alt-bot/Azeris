@@ -23,11 +23,7 @@ public class StartScreen implements Screen {
     @Override
     public void show() {
         camera = new OrthographicCamera();
-        camera.setToOrtho(
-            false,
-            ConstantsPlayer.VIRTUAL_WIDTH,
-            ConstantsPlayer.VIRTUAL_HEIGHT
-        );
+        camera.setToOrtho( false, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
         font = new BitmapFont();
     }
 
@@ -56,6 +52,7 @@ public class StartScreen implements Screen {
         }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            game.guestMode = true;
             game.setScreen(new MenuScreen(game));
         }
     }
