@@ -1,11 +1,13 @@
 package ui.projecto.mecanicas.RoomManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
 public class DungeonManager {
     private final List<RoomData> normalRooms;
+    private final List<RoomData> availableRooms;
     private final RoomData bossRoom;
     private RoomData currentRoom;
     private boolean onBoss = false;
@@ -14,6 +16,7 @@ public class DungeonManager {
 
     public DungeonManager() {
         normalRooms = new ArrayList<>();
+        availableRooms = new ArrayList<>();
         loadAllRooms();
         bossRoom = new RoomData("maps/mapas/BossFinal.tmx", true);
         currentRoom = normalRooms.get(random.nextInt(normalRooms.size()));
@@ -53,21 +56,25 @@ public class DungeonManager {
         normalRooms.add(new RoomData("maps/mapas/Mapa30.tmx", false));
     }
 
+    private void reshuffleRooms() {
+        availableRooms.clear();
+        availableRooms.addAll(normalRooms);
+        Collections.shuffle(availableRooms);
+        System.out.println("[DUNGEON] Salas mezcladas nuevamente");
+    }
+
     public RoomData getCurrentRoom() {
         return onBoss ? bossRoom : currentRoom;
     }
 
     public boolean nextRoom() {
         if (onBoss) return false;
-        RoomData previous = currentRoom;
-        if (normalRooms.size() > 1) {
-            RoomData next;
-            do {
-                next = normalRooms.get(random.nextInt(normalRooms.size()));
-            } while (next.getMapPath().equals(previous.getMapPath()));
-            currentRoom = next;
+        if (availableRooms.isEmpty()) {
+            reshuffleRooms();
         }
+        currentRoom = availableRooms.remove(0);
         currentRoomIndex++;
+        System.out.println("[DUNGEON] Nueva sala: " + currentRoom.getMapPath());
         return true;
     }
 

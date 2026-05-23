@@ -5,6 +5,7 @@ public class ConstantsDiablo {
     public static int DOLOR = 1000;
     public static float WIDTH = 200f, HEIGHT = 200f;
     public static float HITBOX_WIDTH = 90f, HITBOX_HEIGHT = 160f;
+    public static final float HITBOX_OFFSET_X = 20f;
     public static float VELOCIDAD = 100f;
     public static float DETECTED_PLAYER = 300f;
 

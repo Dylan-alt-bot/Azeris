@@ -20,7 +20,7 @@ import java.util.List;
 public class Player{
     public float x, y;
     public int damage = ConstantsPlayer.DAMAGE;
-    private final float spawnX, spawnY;
+    private float spawnX, spawnY;
     private float velocidadBase = ConstantsPlayer.VELOCIDAD;
     private float velocidad = velocidadBase;
     private PlayerState state = PlayerState.IDLE, previousState = PlayerState.IDLE;
@@ -359,9 +359,9 @@ public class Player{
     }
 
     public boolean attackHits(Enemy enemy){
-        float range = 5f;
-        float width = 60f;
-        float height = 30f;
+        float range = 10f;
+        float width = 90f;
+        float height = 45f;
 
         float attackX = x;
         float attackY = y;
@@ -440,5 +440,10 @@ public class Player{
 
     public void setMap (MapManager newMap) {
         this.map = newMap;
+    }
+
+    public void setRoomSpawn(float x, float y) {
+        this.spawnX = x;
+        this.spawnY = y;
     }
 }

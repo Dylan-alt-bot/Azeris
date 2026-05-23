@@ -6,12 +6,14 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import ui.projecto.Main;
 import ui.projecto.personajes.Player.Util.ConstantsPlayer;
 
 public class EndingScreen implements Screen {
     private final Main game;
     private OrthographicCamera camera;
+    private BitmapFont font;
 
     private Texture[] slides;
     private Texture fadeTexture;
@@ -36,6 +38,7 @@ public class EndingScreen implements Screen {
     @Override
     public void show() {
         camera = new OrthographicCamera();
+        font = new BitmapFont();
         camera.setToOrtho(false, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
 
         fadeTexture = new Texture("extras/fnd_negro.png");
@@ -62,12 +65,25 @@ public class EndingScreen implements Screen {
             game.batch.draw(slides[currentSlide], 0, 0, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
         }
 
+        font.draw(game.batch, "SPACE = Saltar", 20, 450);
+
         if (fadeAlpha > 0f) {
             game.batch.setColor(1, 1, 1, fadeAlpha);
             game.batch.draw(fadeTexture, 0, 0, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
             game.batch.setColor(1, 1, 1, 1);
         }
         game.batch.end();
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            currentSlide++;
+            if (currentSlide >= TOTAL_SLIDES) {
+                state = EndingScreen.State.DONE;
+            } else {
+                state =  EndingScreen.State.FADE_IN;
+            }
+            slideTimer = 0f;
+            fadeAlpha = 1f;
+        }
 
         slideTimer += delta;
         switch (state) {

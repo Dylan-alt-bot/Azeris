@@ -6,24 +6,24 @@ import ui.projecto.mecanicas.MapManager;
 import java.util.*;
 
 public class EnemyPathFinder {
-
     private final MapManager map;
     private final int tileSize;
+    private final float maxStep;
 
     public EnemyPathFinder(MapManager mapManager, int tileSize) {
         this.map = mapManager;
         this.tileSize = tileSize;
+        this.maxStep = tileSize * 1.5f;
     }
 
     public Vector2 findNextStep(float startX, float startY, float targetX, float targetY) {
         float dx = targetX - startX;
         float dy = targetY - startY;
-        if (dx * dx + dy * dy < 16f) {
+        if (dx * dx + dy * dy < (tileSize * 0.5f) * (tileSize * 0.5f)) {
             return new Vector2(targetX, targetY);
         }
         Node startNode = new Node(worldToTile(startX, startY));
         Node targetNode = new Node(worldToTile(targetX, targetY));
-
         if (isBlocked(startNode)) {
             startNode = findNearestFreeNode(startNode);
             if (startNode == null) return null;
@@ -32,7 +32,16 @@ public class EnemyPathFinder {
         List<Node> path = aStar(startNode, targetNode);
         if (path == null || path.size() < 2) return null;
         Node next = getNextSmoothNode(startNode, path);
-        return tileToWorld(next.x, next.y);
+        float tileWorldX = next.x * tileSize + tileSize / 2f;
+        float tileWorldY = next.y * tileSize + tileSize / 2f;
+        float stepDx = tileWorldX - startX;
+        float stepDy = tileWorldY - startY;
+        float stepDist = (float) Math.sqrt(stepDx * stepDx + stepDy * stepDy);
+        if (stepDist > maxStep) {
+            float scale = maxStep / stepDist;
+            return new Vector2(startX + stepDx * scale, startY + stepDy * scale);
+        }
+        return new Vector2(tileWorldX, tileWorldY);
     }
 
     private Node findNearestFreeNode(Node blocked) {
@@ -49,7 +58,7 @@ public class EnemyPathFinder {
 
     private Node getNextSmoothNode(Node current, List<Node> path) {
         if (path.size() <= 2) return path.get(1);
-        for (int i = Math.min(3, path.size() - 1); i > 0; i--) {
+        for (int i = Math.min(2, path.size() - 1); i > 0; i--) {
             Node candidate = path.get(i);
             if (isWalkableLine(current, candidate)) {
                 return candidate;
@@ -86,13 +95,6 @@ public class EnemyPathFinder {
 
     private int[] worldToTile(float x, float y) {
         return new int[]{(int)(x / tileSize), (int)(y / tileSize)};
-    }
-
-    private Vector2 tileToWorld(float tx, float ty) {
-        return new Vector2(
-            tx * tileSize + tileSize / 2f,
-            ty * tileSize + tileSize / 2f
-        );
     }
 
     private static class Node {

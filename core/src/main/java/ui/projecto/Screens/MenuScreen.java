@@ -223,21 +223,10 @@ public class MenuScreen implements Screen {
         game.batch.draw(background, 0, 0, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
 
         TextureRegion bgFrame = backgroundAnim.getKeyFrame(backgroundTimer, true);
-        game.batch.draw(
-            bgFrame,
-            0,
-            0,
-            ConstantsPlayer.VIRTUAL_WIDTH,
-            ConstantsPlayer.VIRTUAL_HEIGHT
-        );
+        game.batch.draw(bgFrame, 0, 0, ConstantsPlayer.VIRTUAL_WIDTH, ConstantsPlayer.VIRTUAL_HEIGHT);
 
         TextureRegion currentFrame = complementoAnim.getKeyFrame(animationTimer, true);
-        game.batch.draw(currentFrame,
-            300,
-            0,
-            360,
-            400
-        );
+        game.batch.draw(currentFrame, 300, 0, 360, 400);
 
         for (MenuButton button : buttons) {
             button.render(game.batch);

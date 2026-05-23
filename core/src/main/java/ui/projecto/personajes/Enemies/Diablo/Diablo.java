@@ -42,7 +42,6 @@ public class Diablo implements Enemy {
     private float hurtTimer  = 0f;
     private float damageTimer = 0f;
 
-    private float alertDuration = ConstantsDiablo.ALERT_DURATION;
     private final float attackRange = ConstantsDiablo.ATTACK_RANGE;
     private final float attackCooldown = ConstantsDiablo.ATTACK_COOLDOWN;
     private final float hurtDuration = ConstantsDiablo.HURT_DURATION;
@@ -113,31 +112,22 @@ public class Diablo implements Enemy {
             }
 
             if (hurtTimer <= 0f){
+                hurtTimer = 0f;
                 state = DiabloState.WALK;
                 audio.playWalk();
-                hurtTimer = 0f;
             }
             return;
         }
 
-        float dx = player.x - x;
-        float dy = player.y - y;
-        float distToPlayer = (float) Math.sqrt(dx * dx + dy * dy);
-
-        boolean playerInRange = vision.isPlayerInRange(x, y, player.x, player.y);
+        float diabloCenterX = getHitboxX() + hitboxWidth / 2f;
+        float diabloCenterY = getHitboxY() + hitboxHeight / 2f;
+        float playerCenterX = player.x + player.getWidth() / 2f;
+        float playerCenterY = player.y + player.getHeight() / 2f;
+        boolean playerInRange = vision.isPlayerInRange(diabloCenterX, diabloCenterY, playerCenterX, playerCenterY);
         if (playerInRange) {
             vision.updateLastSeenPosition(player.x, player.y, tiempo);
         }
-
-        boolean hasLineOfSight = false;
-        if (playerInRange) {
-            if (distToPlayer < attackRange * 1.5f) {
-                hasLineOfSight = true;
-            } else {
-                hasLineOfSight = pathFinder.hasLineOfSight(x, y, player.x, player.y);
-            }
-        }
-
+        boolean hasLineOfSight = playerInRange && pathFinder.hasLineOfSight(diabloCenterX, diabloCenterY, playerCenterX, playerCenterY);
         boolean hasRecentMemory = vision.hasRecentMemory(tiempo, ConstantsDiablo.MEMORY_DURATION);
         Vector2 targetPosition;
         if (playerInRange && hasLineOfSight) {
@@ -148,6 +138,7 @@ public class Diablo implements Enemy {
                 state = DiabloState.ALERT;
                 alertTimer = 0f;
                 alertStarted = true;
+                tiempo = 0f;
                 wander.stop();
             }
             if (state == DiabloState.ALERT) {
@@ -174,12 +165,10 @@ public class Diablo implements Enemy {
 
             if (state == DiabloState.WALK) {
                 executeMovementToTarget(delta, targetPosition);
-
-                float memDx = targetPosition.x - x;
-                float memDy = targetPosition.y - y;
+                float memDx = targetPosition.x - diabloCenterX;
+                float memDy = targetPosition.y - diabloCenterY;
                 float distToMemory = (float) Math.sqrt(memDx * memDx + memDy * memDy);
-                boolean canNowSeePlayer = pathFinder.hasLineOfSight(x, y, player.x, player.y);
-
+                boolean canNowSeePlayer = pathFinder.hasLineOfSight(diabloCenterX, diabloCenterY, playerCenterX, playerCenterY);
                 if (canNowSeePlayer) {
                     vision.updateLastSeenPosition(player.x, player.y, tiempo);
                     alertStarted = true;
@@ -208,8 +197,10 @@ public class Diablo implements Enemy {
                 state = DiabloState.WALK;
 
                 float oldX = x;
-                x = wander.moveX(x, y, delta);
-                y = wander.moveY(x, y, delta);
+                float newX = wander.moveX(x, y, delta);
+                float newY = wander.moveY(x, y, delta);
+                x = newX;
+                y = newY;
                 updateFacing(x - oldX);
                 if (wander.reachedTarget(x, y)){
                     wander.stop();
@@ -239,7 +230,6 @@ public class Diablo implements Enemy {
     @Override
     public void render(SpriteBatch batch) {
         Animation<TextureRegion> anim = animations.get(state);
-
         if (anim != null) {
             boolean loop = state != DiabloState.DEFEAT;
             TextureRegion baseFrame = anim.getKeyFrame(tiempo, loop);
@@ -265,102 +255,76 @@ public class Diablo implements Enemy {
         return isPlayerInAttackRange(player);
     }
 
-    private boolean collidesWithPlayer(Player player) {
-        float hx = getHitboxX();
-        float hy = getHitboxY();
-
-        float pw = player.getWidth();
-        float ph = player.getHeight();
-
-        return !(player.x + pw < hx ||
-            player.x > hx + hitboxWidth ||
-            player.y + ph < hy ||
-            player.y > hy + hitboxHeight);
-    }
-
     private boolean isPlayerInAttackRange(Player player) {
-        float px = player.x;
-        float py = player.y;
-
-        float playerCenterX = px + player.getWidth() / 2f;
-        float playerCenterY = py + player.getHeight() / 2f;
-
+        float playerCenterX = player.x + player.getWidth() / 2f;
+        float playerCenterY = player.y + player.getHeight() / 2f;
         float diabloCenterX = getHitboxX() + hitboxWidth / 2f;
         float diabloCenterY = getHitboxY() + hitboxHeight / 2f;
-
         float dx = playerCenterX - diabloCenterX;
         float dy = playerCenterY - diabloCenterY;
-
         float dist2 = dx * dx + dy * dy;
-
         return dist2 <= attackRange * attackRange;
     }
 
     private void resolvePlayerCollision(Player player) {
         float hx = getHitboxX();
         float hy = getHitboxY();
-
         float px = player.x;
         float py = player.y;
         float pw = player.getWidth();
         float ph = player.getHeight();
-
         if (!(px + pw < hx || px > hx + hitboxWidth ||
             py + ph < hy || py > hy + hitboxHeight)) {
-
             float overlapX = (hx + hitboxWidth / 2f) - (px + pw / 2f);
             float overlapY = (hy + hitboxHeight / 2f) - (py + ph / 2f);
-
             if (Math.abs(overlapX) > Math.abs(overlapY)) {
-                if (overlapX > 0) {
-                    x += 2f;
-                } else {
-                    x -= 2f;
-                }
+                if (overlapX > 0) x += 2f;
+                else x -= 2f;
             } else {
-                if (overlapY > 0) {
-                    y += 2f;
-                } else {
-                    y -= 2f;
-                }
+                if (overlapY > 0) y += 2f;
+                else y -= 2f;
             }
         }
     }
 
     private void executeChase(float delta, Vector2 target, Player player) {
         audio.playWalk();
-        float dx = target.x - x;
-        float dy = target.y - y;
-        float distToTarget = (float) Math.sqrt(dx * dx + dy * dy);
-        if (distToTarget < attackRange) {
+        float playerCenterX = player.x + player.getWidth() / 2f;
+        float playerCenterY = player.y + player.getHeight() / 2f;
+        float diabloCenterX = getHitboxX() + hitboxWidth / 2f;
+        float diabloCenterY = getHitboxY() + hitboxHeight / 2f;
+        float dx = playerCenterX - diabloCenterX;
+        float dy = playerCenterY - diabloCenterY;
+        float distToPlayer = (float) Math.sqrt(dx * dx + dy * dy);
+        if (distToPlayer <= attackRange) {
             audio.stopWalk();
             audio.playAttack();
             state = DiabloState.ATTACK;
             attackTimer = 0f;
+            tiempo = 0f;
             return;
         }
         executeMovementToTarget(delta, target);
-        updateFacing(dx);
+        updateFacing(target.x - x);
         resolvePlayerCollision(player);
     }
 
     private void executeMovementToTarget(float delta, Vector2 target) {
-        Vector2 nextStep = pathFinder.findNextStep(x, y, target.x, target.y);
+        float startX = getHitboxX() + hitboxWidth / 2f;
+        float startY = getHitboxY() + hitboxHeight / 2f;
+        Vector2 nextStep = pathFinder.findNextStep(startX, startY, target.x, target.y);
         if (nextStep != null) {
-            float ndx = nextStep.x - x;
-            float ndy = nextStep.y - y;
+            float ndx = nextStep.x - startX;
+            float ndy = nextStep.y - startY;
             float length = (float) Math.sqrt(ndx * ndx + ndy * ndy);
-
             if (length > 0.01f) {
-                float moveX = ndx / length * velocidad * delta;
-                float moveY = ndy / length * velocidad * delta;
+                float moveX = (ndx / length) * velocidad * delta;
+                float moveY = (ndy / length) * velocidad * delta;
                 float newX = x + moveX;
                 float newY = y + moveY;
-
                 boolean canMoveDiagonal = !map.isBlocked(newX, newY, width, height);
                 boolean canMoveX = !map.isBlocked(newX, y, width, height);
                 boolean canMoveY = !map.isBlocked(x, newY, width, height);
-
                 if (canMoveDiagonal) {
                     x = newX;
                     y = newY;
@@ -381,6 +345,22 @@ public class Diablo implements Enemy {
         }
     }
 
+    private void moveDirectlyTowardsTarget(float delta, Vector2 target) {
+        float startX = getHitboxX() + hitboxWidth / 2f;
+        float startY = getHitboxY() + hitboxHeight / 2f;
+        float dx = target.x - startX;
+        float dy = target.y - startY;
+        float length = (float) Math.sqrt(dx * dx + dy * dy);
+        if (length > 0.01f) {
+            float moveX = (dx / length) * velocidad * delta;
+            float moveY = (dy / length) * velocidad * delta;
+            float newX = x + moveX;
+            float newY = y + moveY;
+            if (!map.isBlocked(newX, y, width, height)) x = newX;
+            if (!map.isBlocked(x, newY, width, height)) y = newY;
+        }
+    }
+
     private Vector2 findAlternativeMove(Vector2 target) {
         float[] offsets = {-velocidad, velocidad};
         for (float ox : offsets) {
@@ -394,22 +374,6 @@ public class Diablo implements Enemy {
             }
         }
         return null;
-    }
-
-    private void moveDirectlyTowardsTarget(float delta, Vector2 target) {
-        float dx = target.x - x;
-        float dy = target.y - y;
-        float length = (float) Math.sqrt(dx * dx + dy * dy);
-        if (length > 0.01f) {
-            float moveX = dx / length * velocidad * delta;
-            float moveY = dy / length * velocidad * delta;
-
-            float newX = x + moveX;
-            float newY = y + moveY;
-
-            if (!map.isBlocked(newX, y, width, height)) x = newX;
-            if (!map.isBlocked(x, newY, width, height)) y = newY;
-        }
     }
 
     @Override
@@ -451,6 +415,7 @@ public class Diablo implements Enemy {
         state = DiabloState.HURT;
         tiempo = 0f;
         hurtTimer = hurtDuration;
+        alertStarted = true;
         float dx = x - sourceX;
         float dy = y - sourceY;
         float dist = (float) Math.sqrt(dx * dx + dy * dy);
@@ -473,7 +438,12 @@ public class Diablo implements Enemy {
     }
 
     private float getHitboxX() {
-        return x + (width - hitboxWidth) / 2f;
+        float baseOffset = (width - hitboxWidth) / 2f;
+        if (facingRight) {
+            return x + baseOffset + ConstantsDiablo.HITBOX_OFFSET_X;
+        } else {
+            return x + baseOffset - ConstantsDiablo.HITBOX_OFFSET_X;
+        }
     }
 
     private float getHitboxY() {

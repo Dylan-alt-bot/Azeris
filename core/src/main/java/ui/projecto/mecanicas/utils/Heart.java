@@ -51,7 +51,19 @@ public class Heart implements Utils{
     public float getY() { return y;}
 
     public boolean collides(float px, float py, float w, float h) {
-        return px < x + width && px + w > x && py < y + height && py + h > y;
+        float margin = 20f;
+        float heartLeft = x - margin;
+        float heartRight = x + width + margin;
+        float heartBottom = y - margin;
+        float heartTop = y + height + margin;
+
+        float playerCenterX = px + w / 2f;
+        float playerCenterY = py + h / 2f;
+
+        return playerCenterX > heartLeft  &&
+            playerCenterX < heartRight &&
+            playerCenterY > heartBottom &&
+            playerCenterY < heartTop;
     }
 
     public void dispose() {
